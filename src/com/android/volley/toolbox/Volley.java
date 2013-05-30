@@ -16,16 +16,12 @@
 
 package com.android.volley.toolbox;
 
+import java.io.File;
+
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.http.AndroidHttpClient;
-import android.os.Build;
 
 import com.android.volley.Network;
 import com.android.volley.RequestQueue;
-
-import java.io.File;
 
 public class Volley {
 
@@ -56,9 +52,8 @@ public class Volley {
 
     /**
      * Creates a default instance of the worker pool and calls {@link RequestQueue#start()} on it.
-     * 
-     * @param context
-     *            A {@link Context} to use for creating the cache dir.
+     *
+     * @param context A {@link Context} to use for creating the cache dir.
      * @return A started {@link RequestQueue} instance.
      */
     public static RequestQueue newRequestQueue(Context context) {
