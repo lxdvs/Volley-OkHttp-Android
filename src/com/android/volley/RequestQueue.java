@@ -16,17 +16,19 @@
 
 package com.android.volley;
 
-import android.os.Handler;
-import android.os.Looper;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import android.os.Handler;
+import android.os.Looper;
 
 /**
  * A request dispatch queue with a thread pool of dispatchers.
@@ -207,6 +209,22 @@ public class RequestQueue {
                 return request.getTag() == tag;
             }
         });
+    }
+
+    public List< Request< ? >> get(RequestFilter filter) {
+        synchronized (mCurrentRequests) {
+            ArrayList< Request< ? > > requests = new ArrayList< Request< ? > >();
+            for (Request< ? > request : mCurrentRequests) {
+                if (filter.apply(request)) {
+                    requests.add(request);
+                }
+            }
+            return requests;
+        }
+    }
+
+    public boolean isProcessing(Request< ? > request) {
+        return mCurrentRequests.contains(request);
     }
 
     /**
