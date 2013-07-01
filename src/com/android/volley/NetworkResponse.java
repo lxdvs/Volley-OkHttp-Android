@@ -18,6 +18,7 @@ package com.android.volley;
 
 import org.apache.http.HttpStatus;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -38,6 +39,14 @@ public class NetworkResponse {
         this.data = data;
         this.headers = headers;
         this.notModified = notModified;
+        
+        String inter;
+        try {
+            inter = new String(data, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            inter = "<error parse failed>";
+        }
+        errorResponseString = inter;
     }
 
     public NetworkResponse(byte[] data) {
@@ -59,4 +68,7 @@ public class NetworkResponse {
 
     /** True if the server returned a 304 (Not Modified). */
     public final boolean notModified;
+    
+    /** Attempted parse of the returned string data */
+    public final String errorResponseString;
 }
