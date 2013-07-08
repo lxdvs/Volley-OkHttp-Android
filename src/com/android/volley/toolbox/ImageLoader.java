@@ -204,8 +204,6 @@ public class ImageLoader {
         // only fulfill requests that were initiated from the main thread.
         throwIfNotOnMainThread();
 
-        final Object block = new Object();
-
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
         // Try to look up the request in the cache of remote images.
@@ -239,14 +237,12 @@ public class ImageLoader {
                     @Override
                     public void onResponse(Bitmap response) {
                         onGetImageSuccess(cacheKey, response);
-                        block.notifyAll();
                     }
                 }, maxWidth, maxHeight,
                         Config.RGB_565, new ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
                                 onGetImageError(cacheKey, error);
-                                block.notifyAll();
                             }
                         });
 
