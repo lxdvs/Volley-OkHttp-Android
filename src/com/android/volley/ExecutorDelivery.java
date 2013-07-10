@@ -17,6 +17,7 @@
 package com.android.volley;
 
 import android.os.Handler;
+import android.text.TextUtils;
 
 import java.util.concurrent.Executor;
 
@@ -64,7 +65,9 @@ public class ExecutorDelivery implements ResponseDelivery {
 
     @Override
     public void postError(Request<?> request, VolleyError error) {
-        request.addMarker("post-error: " + error.networkResponse.errorResponseString);
+        String errStr = error.networkResponse != null && TextUtils.isEmpty(error.networkResponse.errorResponseString) ? 
+                "<unparsed>" : error.networkResponse.errorResponseString;
+        request.addMarker("post-error: " + errStr);
         Response<?> response = Response.error(error);
         mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, null));
     }
