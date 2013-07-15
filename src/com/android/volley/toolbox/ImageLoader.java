@@ -144,26 +144,34 @@ public class ImageLoader {
 
     /**
      * Blocking retrieval for an image. Will look in the caches first.
-     * @param requestUrl the image URL to be requested
+     * 
+     * @param requestUrl
+     *            the image URL to be requested
      * @return ImageContainer containing populated fields. Use getBitmap() to get the bitmap.
      */
     public ImageContainer getImageBlocking(String requestUrl) {
         final Object block = new Object();
         ImageListener listener = new ImageListener() {
-            
+
             @Override
             public void onErrorResponse(VolleyError error) {
-                block.notifyAll();
+                synchronized (block) {
+                    block.notifyAll();
+                }
             }
-            
+
             @Override
-            public void onResponse(ImageContainer response, boolean isImmediate) { 
-                block.notifyAll();
+            public void onResponse(ImageContainer response, boolean isImmediate) {
+                synchronized (block) {
+                    block.notifyAll();
+                }
             }
         };
         ImageContainer container = get(requestUrl, listener, 0, 0, true);
         try {
-            block.wait();
+            synchronized (block) {
+                block.wait();
+            }
         } catch (InterruptedException e) {
         }
         return container;
@@ -201,9 +209,6 @@ public class ImageLoader {
      */
     public ImageContainer get(String requestUrl, ImageListener imageListener,
             int maxWidth, int maxHeight, boolean blocking) {
-        // only fulfill requests that were initiated from the main thread.
-        throwIfNotOnMainThread();
-
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
         // Try to look up the request in the cache of remote images.
