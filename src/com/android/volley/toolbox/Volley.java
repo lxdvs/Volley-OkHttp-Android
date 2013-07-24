@@ -17,11 +17,16 @@
 package com.android.volley.toolbox;
 
 import java.io.File;
+import java.net.URL;
+import java.security.GeneralSecurityException;
+
+import javax.net.ssl.SSLContext;
 
 import android.content.Context;
 
 import com.android.volley.Network;
 import com.android.volley.RequestQueue;
+import com.squareup.okhttp.OkHttpClient;
 
 public class Volley {
 
@@ -40,6 +45,17 @@ public class Volley {
 
         if (stack == null) {
             stack = new OkHttpStack();
+            OkHttpClient client = ((OkHttpStack)stack).getClient();
+            
+            SSLContext sslContext;
+            try {
+                sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, null, null);
+            } catch (GeneralSecurityException e) {
+                throw new AssertionError(); // The system has no TLS. Just give up.
+            }
+            client.setSslSocketFactory(sslContext.getSocketFactory());
+            URL.setURLStreamHandlerFactory(client);
         }
 
         Network network = new BasicNetwork(stack);
