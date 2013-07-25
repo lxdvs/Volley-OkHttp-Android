@@ -115,7 +115,9 @@ public class NetworkImageView extends ImageView {
                 mImageContainer.cancelRequest();
                 mImageContainer = null;
             }
-            setImageBitmap(null);
+            if (mDefaultImageId != 0) {
+                setImageResource(mDefaultImageId);
+            }
             return;
         }
 
@@ -189,6 +191,12 @@ public class NetworkImageView extends ImageView {
         super.onDetachedFromWindow();
     }
 
+    @Override
+    public void setImageResource(int resId) {
+        super.setImageResource(resId);
+        mDefaultImageId = resId;
+        mUrl = null;
+    }
     @Override
     protected void drawableStateChanged() {
         super.drawableStateChanged();
