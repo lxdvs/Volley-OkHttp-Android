@@ -104,11 +104,11 @@ public class HurlStack implements HttpStack {
         }
         URL parsedUrl = new URL(url);
         HttpURLConnection connection = openConnection(parsedUrl, request);
-        if (connection instanceof HttpURLConnectionImpl) {
-            ((HttpURLConnectionImpl)connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
-        } else if (connection instanceof HttpsURLConnectionImpl) {
-            ((HttpsURLConnectionImpl)connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
-        }
+//        if (connection instanceof HttpURLConnectionImpl) {
+//            ((HttpURLConnectionImpl)connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
+//        } else if (connection instanceof HttpsURLConnectionImpl) {
+//            ((HttpsURLConnectionImpl)connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
+//        }
         for (String headerName : map.keySet()) {
             connection.addRequestProperty(headerName, map.get(headerName));
         }
