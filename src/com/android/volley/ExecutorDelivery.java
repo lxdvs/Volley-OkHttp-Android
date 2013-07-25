@@ -66,7 +66,7 @@ public class ExecutorDelivery implements ResponseDelivery {
     @Override
     public void postError(Request<?> request, VolleyError error) {
         
-        String errStr = error.networkResponse == null || TextUtils.isEmpty(error.networkResponse.errorResponseString) ? 
+        String errStr = error == null || error.networkResponse == null || TextUtils.isEmpty(error.networkResponse.errorResponseString) ? 
                 "<unparsed>" : error.networkResponse.errorResponseString;
         request.addMarker("post-error: " + errStr);
         Response<?> response = Response.error(error);
