@@ -116,7 +116,7 @@ public class NetworkImageView extends ImageView {
                 mImageContainer = null;
             }
             if (mDefaultImageId != 0) {
-                setImageResource(mDefaultImageId);
+                setTransientImageResource(mDefaultImageId);
             }
             return;
         }
@@ -163,7 +163,7 @@ public class NetworkImageView extends ImageView {
                         if (response.getBitmap() != null) {
                             setImageBitmap(response.getBitmap());
                         } else if (mDefaultImageId != 0) {
-                            setImageResource(mDefaultImageId);
+                            setTransientImageResource(mDefaultImageId);
                         }
                     }
                 }, false);
@@ -197,6 +197,11 @@ public class NetworkImageView extends ImageView {
         mDefaultImageId = resId;
         mUrl = null;
     }
+
+    public void setTransientImageResource(int resId) {
+        super.setImageResource(resId);
+    }
+
     @Override
     protected void drawableStateChanged() {
         super.drawableStateChanged();
