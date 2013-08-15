@@ -36,23 +36,33 @@ public class VolleyLog {
     }
 
     public static void d(String format, Object... args) {
-        Log.d(TAG, buildMessage(format, args));
+        if (DEBUG) {
+            Log.d(TAG, buildMessage(format, args));
+        }
     }
 
     public static void e(String format, Object... args) {
-        Log.e(TAG, buildMessage(format, args));
+        if (DEBUG) {
+            Log.e(TAG, buildMessage(format, args));
+        }
     }
 
     public static void e(Throwable tr, String format, Object... args) {
-        Log.e(TAG, buildMessage(format, args), tr);
+        if (DEBUG) {
+            Log.e(TAG, buildMessage(format, args), tr);
+        }
     }
 
     public static void wtf(String format, Object... args) {
-        Log.wtf(TAG, buildMessage(format, args));
+        if (DEBUG) {
+            Log.wtf(TAG, buildMessage(format, args));
+        }
     }
 
     public static void wtf(Throwable tr, String format, Object... args) {
-        Log.wtf(TAG, buildMessage(format, args), tr);
+        if (DEBUG) {
+            Log.wtf(TAG, buildMessage(format, args), tr);
+        }
     }
 
     /**
