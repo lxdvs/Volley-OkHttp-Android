@@ -95,7 +95,6 @@ public class ExecutorDelivery implements ResponseDelivery {
         public void run() {
             // If this request has canceled, finish it and don't deliver.
             
-            Log.i("MarkerLog", "RUNZ " + mRequest.getUrl());
             if (mRequest.isCanceled()) {
                 mRequest.finish("canceled-at-delivery");
                 return;
