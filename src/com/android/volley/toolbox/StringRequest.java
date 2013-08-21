@@ -56,7 +56,7 @@ public class StringRequest extends Request<String> {
     }
 
     @Override
-    protected void deliverResponse(String response) {
+    protected void deliverResponse(String response, boolean intermediate) {
         mListener.onResponse(response);
     }
 

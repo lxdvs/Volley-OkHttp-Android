@@ -16,10 +16,11 @@
 
 package com.android.volley;
 
+import java.util.concurrent.Executor;
+
 import android.os.Handler;
 import android.text.TextUtils;
-
-import java.util.concurrent.Executor;
+import android.util.Log;
 
 /**
  * Delivers responses and errors.
@@ -93,6 +94,8 @@ public class ExecutorDelivery implements ResponseDelivery {
         @Override
         public void run() {
             // If this request has canceled, finish it and don't deliver.
+            
+            Log.i("MarkerLog", "RUNZ " + mRequest.getUrl());
             if (mRequest.isCanceled()) {
                 mRequest.finish("canceled-at-delivery");
                 return;
@@ -100,7 +103,7 @@ public class ExecutorDelivery implements ResponseDelivery {
 
             // Deliver a normal response or error, depending.
             if (mResponse.isSuccess()) {
-                mRequest.deliverResponse(mResponse.result);
+                mRequest.deliverResponse(mResponse.result, mResponse.intermediate);
             } else {
                 mRequest.deliverError(mResponse.error);
             }

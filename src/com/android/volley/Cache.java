@@ -23,6 +23,9 @@ import java.util.Map;
  * An interface for a cache keyed by a String with a byte array as data.
  */
 public interface Cache {
+    
+    public static final String PERMACACHE_KEY = "permacache:";
+    
     /**
      * Retrieves an entry from the cache.
      * @param key Cache key

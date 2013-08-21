@@ -61,7 +61,7 @@ public abstract class JsonRequest<T> extends Request<T> {
     }
 
     @Override
-    protected void deliverResponse(T response) {
+    protected void deliverResponse(T response, boolean intermediate) {
         mListener.onResponse(response);
     }
 

@@ -263,6 +263,9 @@ public class DiskBasedCache implements Cache {
         while (iterator.hasNext()) {
             Map.Entry<String, CacheHeader> entry = iterator.next();
             CacheHeader e = entry.getValue();
+            if (e.key.startsWith(Cache.PERMACACHE_KEY)) {
+                continue;
+            }
             boolean deleted = getFileForKey(e.key).delete();
             if (deleted) {
                 mTotalSize -= e.size;

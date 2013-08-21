@@ -182,7 +182,7 @@ public class ImageRequest extends Request<Bitmap> {
     }
 
     @Override
-    protected void deliverResponse(Bitmap response) {
+    protected void deliverResponse(Bitmap response, boolean intermediate) {
         mListener.onResponse(response);
     }
 

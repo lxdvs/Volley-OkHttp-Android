@@ -61,7 +61,7 @@ public class RequestTest extends TestCase {
         }
 
         @Override
-        protected void deliverResponse(Object response) {
+        protected void deliverResponse(Object response, boolean intermediate) {
         }
 
         @Override

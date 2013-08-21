@@ -255,9 +255,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * Returns the cache key for this request.  By default, this is the URL.
      */
     public String getCacheKey() {
-        return getUrl();
+        return isPermaCache() ? Cache.PERMACACHE_KEY + getUrl() : getUrl();
     }
 
+    public boolean isPermaCache() {
+        return false;
+    }
     /**
      * Annotates this request with an entry retrieved for it from cache.
      * Used for cache coherency support.
@@ -510,8 +513,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * be non-null; responses that fail to parse are not delivered.
      * @param response The parsed response returned by
      * {@link #parseNetworkResponse(NetworkResponse)}
+     * @param intermediate 
      */
-    abstract protected void deliverResponse(T response);
+    abstract protected void deliverResponse(T response, boolean intermediate);
 
     /**
      * Delivers error message to the ErrorListener that the Request was

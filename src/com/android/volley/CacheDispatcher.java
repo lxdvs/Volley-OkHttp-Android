@@ -16,9 +16,10 @@
 
 package com.android.volley;
 
-import android.os.Process;
-
 import java.util.concurrent.BlockingQueue;
+
+import android.os.Process;
+import android.util.Log;
 
 /**
  * Provides a thread for performing cache triage on a queue of requests.

@@ -43,7 +43,7 @@ public class TestRequest {
         }
 
         @Override
-        protected void deliverResponse(byte[] response) {
+        protected void deliverResponse(byte[] response, boolean intermediate) {
         }
     }
 
