@@ -167,7 +167,7 @@ public class NetworkImageView extends ImageView {
                         }
 
                         if (response.getBitmap() != null) {
-                            if (mFade) {
+                            if (mFade && !isImmediate) {
                                 TransitionDrawable td = new TransitionDrawable(new Drawable[] {
                                         new ColorDrawable(android.R.color.transparent),
                                         new BitmapDrawable(getContext().getResources(), response.getBitmap())
