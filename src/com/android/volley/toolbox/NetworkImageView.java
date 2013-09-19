@@ -46,14 +46,13 @@ public class NetworkImageView extends ImageView {
     private int mErrorImageId;
 
     private boolean mFade = true;
+    private static final int FADE_MS = 250;
 
     /** Local copy of the ImageLoader. */
     private ImageLoader mImageLoader;
 
     /** Current ImageContainer. (either in-flight or finished) */
     private ImageContainer mImageContainer;
-
-    private int FADE_MS = 250;
 
     public NetworkImageView(Context context) {
         this(context, null);
