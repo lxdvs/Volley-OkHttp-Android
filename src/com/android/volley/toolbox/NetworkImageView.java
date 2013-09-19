@@ -16,6 +16,10 @@
 package com.android.volley.toolbox;
 
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.widget.ImageView;
@@ -25,8 +29,7 @@ import com.android.volley.toolbox.ImageLoader.ImageContainer;
 import com.android.volley.toolbox.ImageLoader.ImageListener;
 
 /**
- * Handles fetching an image from a URL as well as the life-cycle of the
- * associated request.
+ * Handles fetching an image from a URL as well as the life-cycle of the associated request.
  */
 public class NetworkImageView extends ImageView {
     /** The URL of the network image to load */
@@ -42,11 +45,15 @@ public class NetworkImageView extends ImageView {
      */
     private int mErrorImageId;
 
+    private boolean mFade = true;
+
     /** Local copy of the ImageLoader. */
     private ImageLoader mImageLoader;
 
     /** Current ImageContainer. (either in-flight or finished) */
     private ImageContainer mImageContainer;
+
+    private int FADE_MS = 250;
 
     public NetworkImageView(Context context) {
         this(context, null);
@@ -61,16 +68,16 @@ public class NetworkImageView extends ImageView {
     }
 
     /**
-     * Sets URL of the image that should be loaded into this view. Note that calling this will
-     * immediately either set the cached image (if available) or the default image specified by
-     * {@link NetworkImageView#setDefaultImageResId(int)} on the view.
-     *
-     * NOTE: If applicable, {@link NetworkImageView#setDefaultImageResId(int)} and
-     * {@link NetworkImageView#setErrorImageResId(int)} should be called prior to calling
-     * this function.
-     *
-     * @param url The URL that should be loaded into this ImageView.
-     * @param imageLoader ImageLoader that will be used to make the request.
+     * Sets URL of the image that should be loaded into this view. Note that calling this will immediately either set the cached image (if available) or the
+     * default image specified by {@link NetworkImageView#setDefaultImageResId(int)} on the view.
+     * 
+     * NOTE: If applicable, {@link NetworkImageView#setDefaultImageResId(int)} and {@link NetworkImageView#setErrorImageResId(int)} should be called prior to
+     * calling this function.
+     * 
+     * @param url
+     *            The URL that should be loaded into this ImageView.
+     * @param imageLoader
+     *            ImageLoader that will be used to make the request.
      */
     public void setImageUrl(String url, ImageLoader imageLoader) {
         mUrl = url;
@@ -80,16 +87,14 @@ public class NetworkImageView extends ImageView {
     }
 
     /**
-     * Sets the default image resource ID to be used for this view until the attempt to load it
-     * completes.
+     * Sets the default image resource ID to be used for this view until the attempt to load it completes.
      */
     public void setDefaultImageResId(int defaultImage) {
         mDefaultImageId = defaultImage;
     }
 
     /**
-     * Sets the error image resource ID to be used for this view in the event that the image
-     * requested fails to load.
+     * Sets the error image resource ID to be used for this view in the event that the image requested fails to load.
      */
     public void setErrorImageResId(int errorImage) {
         mErrorImageId = errorImage;
@@ -97,7 +102,9 @@ public class NetworkImageView extends ImageView {
 
     /**
      * Loads the image for the view if it isn't already loaded.
-     * @param isInLayoutPass True if this was invoked from a layout pass, false otherwise.
+     * 
+     * @param isInLayoutPass
+     *            True if this was invoked from a layout pass, false otherwise.
      */
     private void loadImageIfNecessary(final boolean isInLayoutPass) {
         int width = getWidth();
@@ -161,7 +168,17 @@ public class NetworkImageView extends ImageView {
                         }
 
                         if (response.getBitmap() != null) {
-                            setImageBitmap(response.getBitmap());
+                            if (mFade) {
+                                TransitionDrawable td = new TransitionDrawable(new Drawable[] {
+                                        new ColorDrawable(android.R.color.transparent),
+                                        new BitmapDrawable(getContext().getResources(), response.getBitmap())
+                                });
+                                setImageDrawable(td);
+                                td.startTransition(FADE_MS);
+                            } else {
+                                setImageBitmap(response.getBitmap());
+                            }
+
                         } else if (mDefaultImageId != 0) {
                             setTransientImageResource(mDefaultImageId);
                         }
@@ -170,6 +187,10 @@ public class NetworkImageView extends ImageView {
 
         // update the ImageContainer to be the new bitmap container.
         mImageContainer = newContainer;
+    }
+
+    public void setFadeEnabled(boolean fade) {
+        mFade = fade;
     }
 
     @Override
