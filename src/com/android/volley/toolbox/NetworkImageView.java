@@ -33,7 +33,7 @@ import com.android.volley.toolbox.ImageLoader.ImageListener;
  */
 public class NetworkImageView extends ImageView {
     /** The URL of the network image to load */
-    private String mUrl;
+    protected String mUrl;
 
     /**
      * Resource ID of the image to be used as a placeholder until the network image is loaded.
