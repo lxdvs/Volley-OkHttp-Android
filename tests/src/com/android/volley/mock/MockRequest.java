@@ -61,7 +61,11 @@ public class MockRequest extends Request<byte[]> {
     public boolean parseResponse_called = false;
 
     @Override
+<<<<<<< HEAD
     protected void deliverResponse(byte[] response, boolean intermediate) {
+=======
+    protected void deliverResponse(byte[] response) {
+>>>>>>> google/master
         deliverResponse_called = true;
     }
 

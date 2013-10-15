@@ -61,7 +61,11 @@ public class RequestTest extends TestCase {
         }
 
         @Override
+<<<<<<< HEAD
         protected void deliverResponse(Object response, boolean intermediate) {
+=======
+        protected void deliverResponse(Object response) {
+>>>>>>> google/master
         }
 
         @Override

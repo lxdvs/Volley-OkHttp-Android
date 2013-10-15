@@ -55,7 +55,11 @@ public class BasicNetworkTest extends AndroidTestCase {
             }
 
             @Override
+<<<<<<< HEAD
             protected void deliverResponse(String response, boolean intermediate) {
+=======
+            protected void deliverResponse(String response) {
+>>>>>>> google/master
             }
 
             @Override

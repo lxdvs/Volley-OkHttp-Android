@@ -66,7 +66,11 @@ public class WaitableQueue extends PriorityBlockingQueue<Request> {
         }
 
         @Override
+<<<<<<< HEAD
         protected void deliverResponse(Object response, boolean intermediate) {
+=======
+        protected void deliverResponse(Object response) {
+>>>>>>> google/master
         }
     }
 }

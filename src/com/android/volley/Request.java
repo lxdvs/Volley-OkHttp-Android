@@ -269,6 +269,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public boolean isPermaCache() {
         return false;
     }
+
     /**
      * Annotates this request with an entry retrieved for it from cache.
      * Used for cache coherency support.

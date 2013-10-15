@@ -39,13 +39,9 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 
-import android.util.Log;
-
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Request.Method;
-import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
-import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 
 /**
  * An {@link HttpStack} based on {@link HttpURLConnection}.
@@ -104,11 +100,6 @@ public class HurlStack implements HttpStack {
         }
         URL parsedUrl = new URL(url);
         HttpURLConnection connection = openConnection(parsedUrl, request);
-//        if (connection instanceof HttpURLConnectionImpl) {
-//            ((HttpURLConnectionImpl)connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
-//        } else if (connection instanceof HttpsURLConnectionImpl) {
-//            ((HttpsURLConnectionImpl)connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
-//        }
         for (String headerName : map.keySet()) {
             connection.addRequestProperty(headerName, map.get(headerName));
         }

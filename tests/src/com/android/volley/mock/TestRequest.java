@@ -43,7 +43,11 @@ public class TestRequest {
         }
 
         @Override
+<<<<<<< HEAD
         protected void deliverResponse(byte[] response, boolean intermediate) {
+=======
+        protected void deliverResponse(byte[] response) {
+>>>>>>> google/master
         }
     }
 
