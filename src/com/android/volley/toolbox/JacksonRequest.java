@@ -55,9 +55,8 @@ public class JacksonRequest< T extends JacksonRequest > extends Request< T > {
      * @param headers
      *            Map of request headers
      */
-    public JacksonRequest(String url, Map< String, String > headers,
-            Listener< T > listener, ErrorListener errorListener) {
-        super(Method.GET, url, errorListener);
+    public JacksonRequest(String url, Map< String, String > headers, RequestListener<T> listener) {
+        super(Method.GET, url, listener);
         this.headers = headers;
         this.listener = listener;
     }
@@ -134,7 +133,9 @@ public class JacksonRequest< T extends JacksonRequest > extends Request< T > {
                 }
             }
             Entry entry = HttpHeaderParser.parseCacheHeaders(response);
-            entry.setTTL(isPermaCache() ? Long.MAX_VALUE : System.currentTimeMillis() + getTTL());
+            if (entry != null) {
+            	entry.setTTL(isPermaCache() ? Long.MAX_VALUE : System.currentTimeMillis() + getTTL());
+            }
             return Response.success((T) this, entry);
         } catch (UnsupportedEncodingException e) {
             return Response.error(new ParseError(e));
