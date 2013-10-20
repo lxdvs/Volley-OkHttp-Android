@@ -26,9 +26,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * Volley adapter for JSON requests that will be parsed into Java objects by Gson.
- */
 public class JacksonRequest< T extends JacksonRequest > extends Request< T > {
     private static ObjectMapper mapper;
     private static String TAG = JacksonRequest.class.getSimpleName();
