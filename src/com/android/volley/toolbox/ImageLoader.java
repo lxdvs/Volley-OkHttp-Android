@@ -245,7 +245,7 @@ public class ImageLoader {
                         onGetImageSuccess(cacheKey, response);
                     }
                 }, maxWidth, maxHeight,
-                        Config.RGB_565, new ErrorListener() {
+                        Config.ARGB_8888, new ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
                                 onGetImageError(cacheKey, error);
