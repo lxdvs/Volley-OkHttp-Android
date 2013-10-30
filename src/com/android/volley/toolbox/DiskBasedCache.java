@@ -62,7 +62,7 @@ public class DiskBasedCache implements Cache {
     private static final float HYSTERESIS_FACTOR = 0.9f;
 
     /** Current cache version */
-    private static final int CACHE_VERSION = 2;
+    private static final int CACHE_VERSION = 3;
 
     /**
      * Constructs an instance of the DiskBasedCache at the specified directory.
@@ -263,7 +263,7 @@ public class DiskBasedCache implements Cache {
         while (iterator.hasNext()) {
             Map.Entry<String, CacheHeader> entry = iterator.next();
             CacheHeader e = entry.getValue();
-            if (e.key.startsWith(Cache.PERMACACHE_KEY)) {
+            if (e.ttl == Long.MAX_VALUE) {
                 continue;
             }
             boolean deleted = getFileForKey(e.key).delete();

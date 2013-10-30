@@ -256,19 +256,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * Returns the cache key for this request.  By default, this is the URL.
      */
     public String getCacheKey() {
-        return isPermaCache() ? Cache.PERMACACHE_KEY + getUrl() : getUrl();
+        return getUrl();
     }
 
-    /**
-     * @return false if normal cache eviction policies (probably LRU) apply,
-     * true if you want the entry to never be evicted. Note that the
-     * entry will still update with request completion. Also note that the Cache
-     * implementation must handle this, and {@link DiskBasedCache} is the only implementation
-     * to do so at this point.
-     */
-    public boolean isPermaCache() {
-        return false;
-    }
     /**
      * Annotates this request with an entry retrieved for it from cache.
      * Used for cache coherency support.
