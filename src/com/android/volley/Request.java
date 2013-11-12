@@ -50,12 +50,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         int DEPRECATED_GET_OR_POST = -1;
         int GET = 0;
         int POST = 1;
-        int PUT = 2;
+        int PUT = 2; 
         int DELETE = 3;
     }
 
     /** An event log tracing the lifetime of this request; for debugging. */
-    private final MarkerLog mEventLog = MarkerLog.ENABLED ? new MarkerLog() : null;
+    private final MarkerLog mEventLog = isMarkerLogEnabled() ? new MarkerLog() : null;
 
     /** Request method of this request.  Currently supports GET, POST, PUT, and DELETE. */
     private final int mMethod;
@@ -174,11 +174,15 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         mRetryPolicy = retryPolicy;
     }
 
+    protected boolean isMarkerLogEnabled() {
+        return MarkerLog.ENABLED;
+    }
+
     /**
      * Adds an event to this request's event log; for debugging.
      */
     public void addMarker(String tag) {
-        if (MarkerLog.ENABLED) {
+        if (isMarkerLogEnabled()) {
             mEventLog.add(tag, Thread.currentThread().getId());
         } else if (mRequestBirthTime == 0) {
             mRequestBirthTime = SystemClock.elapsedRealtime();
@@ -194,7 +198,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         if (mRequestQueue != null) {
             mRequestQueue.finish(this);
         }
-        if (MarkerLog.ENABLED) {
+        if (isMarkerLogEnabled()) {
             final long threadId = Thread.currentThread().getId();
             if (Looper.myLooper() != Looper.getMainLooper()) {
                 // If we finish marking off of the main thread, we need to
@@ -474,6 +478,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public void markDelivered() {
         mResponseDelivered = true;
+    }
+
+    public Response<?> mCacheResponse;
+    public boolean softDeliveryOnlyOnError() {
+        return false;
     }
 
     /**

@@ -131,6 +131,11 @@ public class ImageRequest extends Request<Bitmap> {
         }
     }
 
+    @Override
+    protected boolean isMarkerLogEnabled() {
+        return false;
+    }
+
     /**
      * The real guts of parseNetworkResponse. Broken out for readability.
      */
