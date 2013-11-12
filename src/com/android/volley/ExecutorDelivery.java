@@ -66,12 +66,16 @@ public class ExecutorDelivery implements ResponseDelivery {
 
     @Override
     public void postError(Request<?> request, VolleyError error) {
-        
         String errStr = error == null || error.networkResponse == null || TextUtils.isEmpty(error.networkResponse.errorResponseString) ? 
                 "<unparsed>" : error.networkResponse.errorResponseString;
-        request.addMarker("post-error: " + errStr);
-        Response<?> response = Response.error(error);
-        mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, null));
+        if (request.softDeliveryOnlyOnError() && request.mCacheResponse != null) {
+            request.addMarker("post-cached-on-error: " + errStr);
+            postResponse(request, request.mCacheResponse, null);
+        } else {
+            request.addMarker("post-error: " + errStr);
+            Response<?> response = Response.error(error);
+            mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, null));
+        }
     }
 
     /**
@@ -103,7 +107,9 @@ public class ExecutorDelivery implements ResponseDelivery {
             // Deliver a normal response or error, depending.
             if (mResponse.isSuccess()) {
                 mRequest.deliverResponse(mResponse.result, mResponse.intermediate);
-            } else {
+            } else if (mRequest.softDeliveryOnlyOnError() && mRequest.mCacheResponse != null) {
+                mRequest.finish("got an error but delivered intermediate response");
+            } else{
                 mRequest.deliverError(mResponse.error);
             }
 

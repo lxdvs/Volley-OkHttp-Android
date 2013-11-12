@@ -131,21 +131,28 @@ public class CacheDispatcher extends Thread {
                     request.addMarker("cache-hit-refresh-needed");
                     request.setCacheEntry(entry);
 
-                    // Mark the response as intermediate.
-                    response.intermediate = true;
-
-                    // Post the intermediate response back to the user and have
-                    // the delivery then forward the request along to the network.
-                    mDelivery.postResponse(request, response, new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                mNetworkQueue.put(request);
-                            } catch (InterruptedException e) {
-                                // Not much we can do about this.
+                    if (request.softDeliveryOnlyOnError()) {
+                        request.mCacheResponse = response;
+                        request.addMarker("cache-error-delivery-response-set");
+                        mNetworkQueue.put(request);
+                    } else {
+                        
+                        // Mark the response as intermediate.
+                        response.intermediate = true;
+                        
+                        // Post the intermediate response back to the user and have
+                        // the delivery then forward the request along to the network.
+                        mDelivery.postResponse(request, response, new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    mNetworkQueue.put(request);
+                                } catch (InterruptedException e) {
+                                    // Not much we can do about this.
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
 
             } catch (InterruptedException e) {
