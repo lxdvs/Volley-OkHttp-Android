@@ -25,14 +25,6 @@
     </application>
 
     <instrumentation android:name="android.test.InstrumentationTestRunner"
-<<<<<<< HEAD
-<<<<<<< HEAD
         android:targetPackage="com.android.volley.tests" />
-=======
-        android:targetPackage="com.android.volley" />
->>>>>>> google/master
-=======
-        android:targetPackage="com.android.volley.tests" />
->>>>>>> 364614b... Revert "Revert "Add in additional http request types""
 
 </manifest>
