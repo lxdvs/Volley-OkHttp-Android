@@ -25,10 +25,6 @@
     </application>
 
     <instrumentation android:name="android.test.InstrumentationTestRunner"
-<<<<<<< HEAD
         android:targetPackage="com.android.volley.tests" />
-=======
-        android:targetPackage="com.android.volley" />
->>>>>>> google/master
 
 </manifest>
