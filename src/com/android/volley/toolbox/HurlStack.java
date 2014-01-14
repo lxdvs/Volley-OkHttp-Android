@@ -19,7 +19,9 @@ package com.android.volley.toolbox;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -87,10 +89,10 @@ public class HurlStack implements HttpStack {
     }
 
     @Override
-    public HttpResponse performRequest(Request< ? > request, Map< String, String > additionalHeaders)
+    public HttpResponse performRequest(Request<?> request, Map<String, String> additionalHeaders)
             throws IOException, AuthFailureError {
         String url = request.getUrl();
-        HashMap< String, String > map = new HashMap< String, String >();
+        HashMap<String, String> map = new HashMap<String, String>();
         map.putAll(request.getHeaders());
         map.putAll(additionalHeaders);
         if (mUrlRewriter != null) {
@@ -123,7 +125,7 @@ public class HurlStack implements HttpStack {
                 connection.getResponseCode(), connection.getResponseMessage());
         BasicHttpResponse response = new BasicHttpResponse(responseStatus);
         response.setEntity(entityFromConnection(connection));
-        for (Entry< String, List< String >> header : connection.getHeaderFields().entrySet()) {
+        for (Entry<String, List<String>> header : connection.getHeaderFields().entrySet()) {
             if (header.getKey() != null) {
                 Header h = new BasicHeader(header.getKey(), header.getValue().get(0));
                 response.addHeader(h);
@@ -165,7 +167,7 @@ public class HurlStack implements HttpStack {
      * @return an open connection
      * @throws IOException
      */
-    private HttpURLConnection openConnection(URL url, Request< ? > request) throws IOException {
+    private HttpURLConnection openConnection(URL url, Request<?> request) throws IOException {
         HttpURLConnection connection = createConnection(url);
 
         int timeoutMs = request.getTimeoutMs();
@@ -184,7 +186,7 @@ public class HurlStack implements HttpStack {
 
     @SuppressWarnings("deprecation")
     /* package */static void setConnectionParametersForRequest(HttpURLConnection connection,
-            Request< ? > request) throws IOException, AuthFailureError {
+            Request<?> request) throws IOException, AuthFailureError {
         switch (request.getMethod()) {
             case Method.DEPRECATED_GET_OR_POST:
                 // This is the deprecated way that needs to be handled for backwards compatibility.
@@ -230,15 +232,30 @@ public class HurlStack implements HttpStack {
                 connection.setRequestMethod("TRACE");
                 break;
             case Method.PATCH:
+                //Workaround for HttpUrlConnection not supporting PATCH request method (Ref: https://github.com/square/retrofit/issues/282)
+                try {
+                    connection.setRequestMethod("PATCH");
+                } catch (ProtocolException pe) {
+                    try {
+                        Field methodField = HttpURLConnection.class.getDeclaredField("method");
+                        methodField.setAccessible(true);
+                        try {
+                            methodField.set(connection, "PATCH");
+                        } catch (IllegalAccessException e) {
+                            throw new IllegalStateException("Unsupported PATCH type", e);
+                        }
+                    } catch (NoSuchFieldException e) {
+                        throw new IllegalStateException("Unsupported PATCH type", e);
+                    }
+                }
                 addBodyIfExists(connection, request);
-                connection.setRequestMethod("PATCH");
                 break;
             default:
                 throw new IllegalStateException("Unknown method type.");
         }
     }
 
-    private static void addBodyIfExists(HttpURLConnection connection, Request< ? > request)
+    private static void addBodyIfExists(HttpURLConnection connection, Request<?> request)
             throws IOException, AuthFailureError {
         byte[] body = request.getBody();
         if (body != null) {
