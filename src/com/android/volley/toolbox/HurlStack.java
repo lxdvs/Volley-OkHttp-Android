@@ -19,9 +19,7 @@ package com.android.volley.toolbox;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +44,7 @@ import com.android.volley.Request;
 import com.android.volley.Request.Method;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.http.ReflectMethod;
 
 /**
  * An {@link HttpStack} based on {@link HttpURLConnection}.
@@ -233,17 +232,11 @@ public class HurlStack implements HttpStack {
                 break;
             case Method.PATCH:
                 //Workaround for HttpUrlConnection not supporting PATCH request method (Ref: https://github.com/square/retrofit/issues/282)
-                try {
-                    connection.setRequestMethod("PATCH");
-                } catch (ProtocolException pe) {
+                if (connection instanceof ReflectMethod) {
                     try {
-                        Field methodField = HttpURLConnection.class.getDeclaredField("method");
-                        methodField.setAccessible(true);
-                        try {
-                            methodField.set(connection, "PATCH");
-                        } catch (IllegalAccessException e) {
-                            throw new IllegalStateException("Unsupported PATCH type", e);
-                        }
+                        ((ReflectMethod) connection).setMethodReflect("PATCH");
+                    } catch (SecurityException e) {
+                        throw new IllegalStateException("Unsupported PATCH type", e);
                     } catch (NoSuchFieldException e) {
                         throw new IllegalStateException("Unsupported PATCH type", e);
                     }
