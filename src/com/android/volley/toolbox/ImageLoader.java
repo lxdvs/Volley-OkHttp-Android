@@ -22,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.widget.ImageView;
 
 import com.android.volley.Request;
@@ -51,12 +52,12 @@ public class ImageLoader {
      * HashMap of Cache keys -> BatchedImageRequest used to track in-flight requests so that we can coalesce multiple requests to the same URL into a single
      * network request.
      */
-    private final HashMap< String, BatchedImageRequest > mInFlightRequests =
-            new HashMap< String, BatchedImageRequest >();
+    private final HashMap<String, BatchedImageRequest> mInFlightRequests =
+            new HashMap<String, BatchedImageRequest>();
 
     /** HashMap of the currently pending responses (waiting to be delivered). */
-    private final HashMap< String, BatchedImageRequest > mBatchedResponses =
-            new HashMap< String, BatchedImageRequest >();
+    private final HashMap<String, BatchedImageRequest> mBatchedResponses =
+            new HashMap<String, BatchedImageRequest>();
 
     /** Handler to the main thread. */
     private final Handler mHandler = new Handler(Looper.getMainLooper());
@@ -167,7 +168,7 @@ public class ImageLoader {
             }
         };
         ImageContainer container = get(requestUrl, listener, 0, 0, true);
-        if (container == null) {
+        if (container == null || (container.getBitmap() == null && TextUtils.isEmpty(container.mCacheKey))) {
             try {
                 synchronized (block) {
                     block.wait();
@@ -238,8 +239,8 @@ public class ImageLoader {
 
         // The request is not already in flight. Send the new request to the network and
         // track it.
-        Request< ? > newRequest =
-                new ImageRequest(requestUrl, new Listener< Bitmap >() {
+        Request<?> newRequest =
+                new ImageRequest(requestUrl, new Listener<Bitmap>() {
                     @Override
                     public void onResponse(Bitmap response) {
                         onGetImageSuccess(cacheKey, response);
@@ -391,13 +392,13 @@ public class ImageLoader {
      */
     private class BatchedImageRequest {
         /** The request being tracked */
-        private final Request< ? > mRequest;
+        private final Request<?> mRequest;
 
         /** The result of the request being tracked by this item */
         private Bitmap mResponseBitmap;
 
         /** List of all of the active ImageContainers that are interested in the request */
-        private final LinkedList< ImageContainer > mContainers = new LinkedList< ImageContainer >();
+        private final LinkedList<ImageContainer> mContainers = new LinkedList<ImageContainer>();
 
         /**
          * Constructs a new BatchedImageRequest object
@@ -407,7 +408,7 @@ public class ImageLoader {
          * @param container
          *            The ImageContainer of the person who initiated the request.
          */
-        public BatchedImageRequest(Request< ? > request, ImageContainer container) {
+        public BatchedImageRequest(Request<?> request, ImageContainer container) {
             mRequest = request;
             mContainers.add(container);
         }
