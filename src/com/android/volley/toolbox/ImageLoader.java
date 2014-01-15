@@ -15,10 +15,14 @@
  */
 package com.android.volley.toolbox;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.widget.ImageView;
 
 import com.android.volley.Request;
@@ -26,10 +30,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
-
-import java.util.HashMap;
-import java.util.LinkedList;
 
 /**
  * Helper that handles loading and caching images from remote URLs.
@@ -74,6 +74,7 @@ public class ImageLoader {
      */
     public interface ImageCache {
         public Bitmap getBitmap(String url);
+
         public void putBitmap(String url, Bitmap bitmap);
     }
 
@@ -214,18 +215,18 @@ public class ImageLoader {
         // The request is not already in flight. Send the new request to the network and
         // track it.
         Request<?> newRequest =
-            new ImageRequest(requestUrl, new Listener<Bitmap>() {
-                @Override
-                public void onResponse(Bitmap response) {
-                    onGetImageSuccess(cacheKey, response);
-                }
-            }, maxWidth, maxHeight,
-            Config.RGB_565, new ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    onGetImageError(cacheKey, error);
-                }
-            });
+                new ImageRequest(requestUrl, new Listener<Bitmap>() {
+                    @Override
+                    public void onResponse(Bitmap response) {
+                        onGetImageSuccess(cacheKey, response);
+                    }
+                }, maxWidth, maxHeight,
+                        Config.RGB_565, new ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                onGetImageError(cacheKey, error);
+                            }
+                        });
 
         mRequestQueue.add(newRequest);
         mInFlightRequests.put(cacheKey,
@@ -354,40 +355,40 @@ public class ImageLoader {
         }
     }
 
-	/*
-	 * Blocking retrieval for an image. Will look in the caches first.
-	 * @param requestUrl the image URL to be requested
-	 * @return ImageContainer containing populated fields. Use getBitmap() to get the bitmap.
-	 */
-	public ImageContainer getImageBlocking(String requestUrl) {
-		final Object block = new Object();
-		ImageListener listener = new ImageListener() {
+    /*
+     * Blocking retrieval for an image. Will look in the caches first.
+     * @param requestUrl the image URL to be requested
+     * @return ImageContainer containing populated fields. Use getBitmap() to get the bitmap.
+     */
+    public ImageContainer getImageBlocking(String requestUrl) {
+        final Object block = new Object();
+        ImageListener listener = new ImageListener() {
 
-			@Override
-			public void onErrorResponse(VolleyError error) {
-				synchronized (block) {
-					block.notifyAll();
-				}
-			}
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                synchronized (block) {
+                    block.notifyAll();
+                }
+            }
 
-			@Override
-			public void onResponse(ImageContainer response, boolean isImmediate) {
-				synchronized (block) {
-					block.notifyAll();
-				}
-			}
-		};
-		ImageContainer container = get(requestUrl, listener, 0, 0);
-		if (container == null) {
-			try {
-				synchronized (block) {
-					block.wait();
-				}
-			} catch (InterruptedException e) {
-			}
-		}
-		return container;
-	}
+            @Override
+            public void onResponse(ImageContainer response, boolean isImmediate) {
+                synchronized (block) {
+                    block.notifyAll();
+                }
+            }
+        };
+        ImageContainer container = get(requestUrl, listener, 0, 0);
+        if (container == null || (container.getBitmap() == null && TextUtils.isEmpty(container.mCacheKey))) {
+            try {
+                synchronized (block) {
+                    block.wait();
+                }
+            } catch (InterruptedException e) {
+            }
+        }
+        return container;
+    }
 
     /**
      * Wrapper class used to map a Request to the set of active ImageContainer objects that are
@@ -499,6 +500,7 @@ public class ImageLoader {
             throw new IllegalStateException("ImageLoader must be invoked from the main thread.");
         }
     }
+
     /**
      * Creates a cache key for use with the L1 cache.
      * @param url The URL of the request.
