@@ -162,13 +162,15 @@ public class ImageLoader {
 
             @Override
             public void onResponse(ImageContainer response, boolean isImmediate) {
-                synchronized (block) {
-                    block.notifyAll();
+                if (!isImmediate) {
+                    synchronized (block) {
+                        block.notifyAll();
+                    }
                 }
             }
         };
         ImageContainer container = get(requestUrl, listener, 0, 0, true);
-        if (container == null || (container.getBitmap() == null && TextUtils.isEmpty(container.mCacheKey))) {
+        if (container == null || (container.getBitmap() == null && !TextUtils.isEmpty(container.mCacheKey))) {
             try {
                 synchronized (block) {
                     block.wait();
