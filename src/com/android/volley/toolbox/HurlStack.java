@@ -257,6 +257,14 @@ public class HurlStack implements HttpStack {
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
             out.write(body);
             out.close();
+        } else {
+            HttpEntity entity = request.getEntity();
+            if (entity != null) {
+                connection.setDoOutput(true);
+                connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
+                entity.writeTo(connection.getOutputStream());
+            }
+
         }
     }
 }
