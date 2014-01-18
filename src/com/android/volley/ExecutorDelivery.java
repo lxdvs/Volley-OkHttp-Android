@@ -20,7 +20,6 @@ import java.util.concurrent.Executor;
 
 import android.os.Handler;
 import android.text.TextUtils;
-import android.util.Log;
 
 /**
  * Delivers responses and errors.
@@ -66,7 +65,7 @@ public class ExecutorDelivery implements ResponseDelivery {
 
     @Override
     public void postError(Request<?> request, VolleyError error) {
-        String errStr = error == null || error.networkResponse == null || TextUtils.isEmpty(error.networkResponse.errorResponseString) ? 
+        String errStr = error == null || error.networkResponse == null || TextUtils.isEmpty(error.networkResponse.errorResponseString) ?
                 "<unparsed>" : error.networkResponse.errorResponseString;
         if (request.softDeliveryOnlyOnError() && request.mCacheResponse != null) {
             request.addMarker("post-cached-on-error: " + errStr);
@@ -98,7 +97,7 @@ public class ExecutorDelivery implements ResponseDelivery {
         @Override
         public void run() {
             // If this request has canceled, finish it and don't deliver.
-            
+
             if (mRequest.isCanceled()) {
                 mRequest.finish("canceled-at-delivery");
                 return;
@@ -109,7 +108,7 @@ public class ExecutorDelivery implements ResponseDelivery {
                 mRequest.deliverResponse(mResponse.result, mResponse.intermediate);
             } else if (mRequest.softDeliveryOnlyOnError() && mRequest.mCacheResponse != null) {
                 mRequest.finish("got an error but delivered intermediate response");
-            } else{
+            } else {
                 mRequest.deliverError(mResponse.error);
             }
 
@@ -125,6 +124,6 @@ public class ExecutorDelivery implements ResponseDelivery {
             if (mRunnable != null) {
                 mRunnable.run();
             }
-       }
+        }
     }
 }

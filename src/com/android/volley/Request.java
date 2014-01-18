@@ -16,6 +16,13 @@
 
 package com.android.volley;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.Map;
+
+import org.apache.http.HttpEntity;
+
 import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.Handler;
@@ -24,12 +31,6 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 
 import com.android.volley.VolleyLog.MarkerLog;
-import com.android.volley.toolbox.DiskBasedCache;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Base class for all network requests.
@@ -50,7 +51,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         int DEPRECATED_GET_OR_POST = -1;
         int GET = 0;
         int POST = 1;
-        int PUT = 2; 
+        int PUT = 2;
         int DELETE = 3;
         int HEAD = 4;
         int OPTIONS = 5;
@@ -118,6 +119,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #Request(int, String, com.android.volley.Response.ErrorListener)}.
      */
+    @Deprecated
     public Request(String url, Response.ErrorListener listener) {
         this(Method.DEPRECATED_GET_OR_POST, url, listener);
     }
@@ -136,7 +138,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
         int trafficTag;
         try {
-            trafficTag = TextUtils.isEmpty(url) ? 0: Uri.parse(url).getHost().hashCode();
+            trafficTag = TextUtils.isEmpty(url) ? 0 : Uri.parse(url).getHost().hashCode();
         } catch (Exception e) {
             trafficTag = 0;
             // URI parsing here is error-prone
@@ -215,7 +217,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
                     @Override
                     public void run() {
                         mEventLog.add(tag, threadId);
-                        mEventLog.finish(this.toString());
+                        mEventLog.finish(toString());
                     }
                 });
                 return;
@@ -320,6 +322,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #getParams()} instead.
      */
+    @Deprecated
     protected Map<String, String> getPostParams() throws AuthFailureError {
         return getParams();
     }
@@ -338,6 +341,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #getParamsEncoding()} instead.
      */
+    @Deprecated
     protected String getPostParamsEncoding() {
         return getParamsEncoding();
     }
@@ -345,6 +349,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * @deprecated Use {@link #getBodyContentType()} instead.
      */
+    @Deprecated
     public String getPostBodyContentType() {
         return getBodyContentType();
     }
@@ -356,6 +361,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #getBody()} instead.
      */
+    @Deprecated
     public byte[] getPostBody() throws AuthFailureError {
         // Note: For compatibility with legacy clients of volley, this implementation must remain
         // here instead of simply calling the getBody() function because this function must
@@ -410,6 +416,10 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         if (params != null && params.size() > 0) {
             return encodeParameters(params, getParamsEncoding());
         }
+        return null;
+    }
+
+    public HttpEntity getEntity() {
         return null;
     }
 
@@ -488,6 +498,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     public Response<?> mCacheResponse;
+
     public boolean softDeliveryOnlyOnError() {
         return false;
     }
