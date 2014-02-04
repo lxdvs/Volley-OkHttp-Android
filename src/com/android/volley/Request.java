@@ -430,10 +430,13 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         StringBuilder encodedParams = new StringBuilder();
         try {
             for (Map.Entry<String, String> entry : params.entrySet()) {
-                encodedParams.append(URLEncoder.encode(entry.getKey(), paramsEncoding));
-                encodedParams.append('=');
-                encodedParams.append(URLEncoder.encode(entry.getValue(), paramsEncoding));
-                encodedParams.append('&');
+                String value = entry.getValue();
+                if (!TextUtils.isEmpty(value)) {
+                    encodedParams.append(URLEncoder.encode(entry.getKey(), paramsEncoding));
+                    encodedParams.append('=');
+                    encodedParams.append(URLEncoder.encode(value, paramsEncoding));
+                    encodedParams.append('&');
+                }
             }
             return encodedParams.toString().getBytes(paramsEncoding);
         } catch (UnsupportedEncodingException uee) {
