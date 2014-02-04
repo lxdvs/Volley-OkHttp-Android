@@ -20,6 +20,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.widget.ImageView;
@@ -168,12 +169,21 @@ public class NetworkImageView extends ImageView {
 
                         if (response.getBitmap() != null) {
                             if (mFade && !isImmediate) {
-                                TransitionDrawable td = new TransitionDrawable(new Drawable[] {
-                                        new ColorDrawable(android.R.color.transparent),
-                                        new BitmapDrawable(getContext().getResources(), response.getBitmap())
-                                });
+                                // first have a transition between the inital default drawable and the new one
+                                final Drawable initialDrawable = getDrawable() != null ? getDrawable() : new ColorDrawable(android.R.color.transparent);
+                                final BitmapDrawable bitmapDrawable = new BitmapDrawable(getContext().getResources(), response.getBitmap());
+
+                                TransitionDrawable td = new TransitionDrawable(new Drawable[] { initialDrawable, bitmapDrawable });
                                 setImageDrawable(td);
                                 td.startTransition(FADE_MS);
+
+                                // after the fade is complete, to avoid overdraw, set it to a single layer drawable
+                                (new Handler()).postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        setImageDrawable(bitmapDrawable);
+                                    }
+                                }, FADE_MS);
                             } else {
                                 setImageBitmap(response.getBitmap());
                             }
