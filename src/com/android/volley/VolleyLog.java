@@ -16,12 +16,13 @@
 
 package com.android.volley;
 
-import android.os.SystemClock;
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import android.os.SystemClock;
+import android.util.Log;
+import android.util.Pair;
 
 /** Logging helper class. */
 public class VolleyLog {
@@ -165,6 +166,32 @@ public class VolleyLog {
             long first = mMarkers.get(0).time;
             long last = mMarkers.get(mMarkers.size() - 1).time;
             return last - first;
+        }
+
+        /**
+         * Note: In order for there to timing info from MarkerLog, {@link Request#isMarkerLogEnabled()} must be true.
+         * 
+         * @return a list of timing events, saved as <event-name, time-for-event>
+         * for example, <"cache-queue-take", 532>
+         */
+        public List<Pair<String, Long>> getTimingLog() {
+
+            List<Pair<String, Long>> rtn = new ArrayList<Pair<String, Long>>();
+
+            if (mMarkers == null || mMarkers.size() == 0) {
+                return rtn;
+            }
+
+            long prevTime = mMarkers.get(0).time;
+
+            for (Marker marker : mMarkers) {
+                long thisTime = marker.time;
+                rtn.add(Pair.create(marker.name, (thisTime - prevTime)));
+                prevTime = thisTime;
+            }
+
+            return rtn;
+
         }
     }
 }

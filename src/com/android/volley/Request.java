@@ -231,6 +231,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
                 VolleyLog.d("%d ms: %s", requestTime, this.toString());
             }
         }
+
+        // if there is a logger for this request queue, then log the request timing info
+        if (mRequestQueue != null && mRequestQueue.getTimingLogger() != null && mEventLog != null) {
+            mRequestQueue.getTimingLogger().log(getUrl(), mEventLog.getTimingLog());
+        }
     }
 
     /**
