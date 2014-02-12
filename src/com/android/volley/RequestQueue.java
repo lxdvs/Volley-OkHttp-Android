@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Pair;
 
 /**
  * A request dispatch queue with a thread pool of dispatchers.
@@ -65,11 +66,11 @@ public class RequestQueue {
 
     /** The cache triage queue. */
     private final PriorityBlockingQueue<Request> mCacheQueue =
-        new PriorityBlockingQueue<Request>();
+            new PriorityBlockingQueue<Request>();
 
     /** The queue of requests that are actually going out to the network. */
     private final PriorityBlockingQueue<Request> mNetworkQueue =
-        new PriorityBlockingQueue<Request>();
+            new PriorityBlockingQueue<Request>();
 
     /** Number of network request dispatcher threads to start. */
     private static final int DEFAULT_NETWORK_THREAD_POOL_SIZE = 4;
@@ -88,6 +89,9 @@ public class RequestQueue {
 
     /** The cache dispatcher. */
     private CacheDispatcher mCacheDispatcher;
+
+    /** Optional request-timing-log callback */
+    private VolleyTimingLogger mTimingLogger;
 
     /**
      * Creates the worker pool. Processing will not begin until {@link #start()} is called.
@@ -131,7 +135,7 @@ public class RequestQueue {
      * Starts the dispatchers in this queue.
      */
     public void start() {
-        stop();  // Make sure any currently running dispatchers are stopped.
+        stop(); // Make sure any currently running dispatchers are stopped.
         // Create the cache dispatcher and start it.
         mCacheDispatcher = new CacheDispatcher(mCacheQueue, mNetworkQueue, mCache, mDelivery);
         mCacheDispatcher.start();
@@ -171,6 +175,21 @@ public class RequestQueue {
      */
     public Cache getCache() {
         return mCache;
+    }
+
+    /** 
+     * A volley request-timing callback which logs the request url, and the time for each operation, as specified in MarkerLog
+     */
+    public interface VolleyTimingLogger {
+        public void log(String requestUrl, List<Pair<String, Long>> timingLogs);
+    }
+
+    public void setTimingLogger(VolleyTimingLogger logger) {
+        mTimingLogger = logger;
+    }
+
+    public VolleyTimingLogger getTimingLogger() {
+        return mTimingLogger;
     }
 
     /**
