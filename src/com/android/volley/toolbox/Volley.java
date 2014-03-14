@@ -44,18 +44,7 @@ public class Volley {
         File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
 
         if (stack == null) {
-            stack = new OkHttpStack();
-            OkHttpClient client = ((OkHttpStack)stack).getClient();
-            
-            SSLContext sslContext;
-            try {
-                sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, null, null);
-            } catch (GeneralSecurityException e) {
-                throw new AssertionError(); // The system has no TLS. Just give up.
-            }
-            client.setSslSocketFactory(sslContext.getSocketFactory());
-            URL.setURLStreamHandlerFactory(client);
+            stack = new HurlStack();
         }
 
         Network network = new BasicNetwork(stack);
