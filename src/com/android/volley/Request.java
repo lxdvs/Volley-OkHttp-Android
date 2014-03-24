@@ -85,6 +85,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /** Whether or not responses to this request should be cached. */
     private boolean mShouldCache = true;
+    
+    /** Whether or not responses to this request should retrieve from the cache. */
+    private boolean mShouldRetrieveCache = true;
 
     /** Whether or not this request has been canceled. */
     private boolean mCanceled = false;
@@ -461,6 +464,23 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public final boolean shouldCache() {
         return mShouldCache;
+    }
+    
+    /**
+     * Set whether this request should retrieve cache entries as opposed to making
+     * a live network request.
+     * @param shouldRetrieveCache false to make the request NOT use the cache. The /response/,
+     * however, will still be cached (see also {@link #setShouldCache(boolean)})
+     */
+    public final void setShouldRetrieveCache(boolean shouldRetrieveCache) {
+        mShouldRetrieveCache = shouldRetrieveCache;
+    }
+    
+    /**
+     * Returns true if responses to this request should retrieve cache entries.
+     */
+    public final boolean shouldRetrieveCache() {
+        return mShouldRetrieveCache;
     }
 
     /**

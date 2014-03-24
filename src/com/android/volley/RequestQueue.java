@@ -263,7 +263,7 @@ public class RequestQueue {
         request.addMarker("add-to-queue");
 
         // If the request is uncacheable, skip the cache queue and go straight to the network.
-        if (!request.shouldCache()) {
+        if (!request.shouldUseCache()) {
             mNetworkQueue.add(request);
             return request;
         }
@@ -321,4 +321,9 @@ public class RequestQueue {
             }
         }
     }
+    
+    public boolean willMissCache(Request request) {
+        return mCacheDispatcher.willMissCache(request);
+    }
+    
 }
