@@ -164,4 +164,9 @@ public class CacheDispatcher extends Thread {
             }
         }
     }
+    
+    public boolean willMissCache(Request request) {
+        Cache.Entry entry = mCache.get(request.getCacheKey());
+        return entry == null || entry.isExpired();
+    }
 }
