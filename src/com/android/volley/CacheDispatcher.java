@@ -133,7 +133,7 @@ public class CacheDispatcher extends Thread {
                     request.addMarker("cache-hit-refresh-needed");
                     request.setCacheEntry(entry);
 
-                    if (request.getReturnStrategy() == ReturnStrategy.ONCE_LATE) {
+                    if (request.getReturnStrategy() == ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
                         request.mCacheResponse = response;
                         request.addMarker("cache-error-delivery-response-set");
                         mNetworkQueue.put(request);

@@ -131,18 +131,18 @@ public class NetworkDispatcher extends Thread {
 
                 // Post the response back.
                 request.markDelivered();
-                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.ONCE_SOON) {
+                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
                     continue;
                 }
                 mDelivery.postResponse(request, response);
             } catch (VolleyError volleyError) {
-                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.ONCE_SOON) {
+                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
                     continue;
                 }
                 parseAndDeliverNetworkError(request, volleyError);
             } catch (Exception e) {
                 VolleyLog.e(e, "Unhandled exception %s", e.toString());
-                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.ONCE_SOON) {
+                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
                     continue;
                 }
                 mDelivery.postError(request, new VolleyError(e));

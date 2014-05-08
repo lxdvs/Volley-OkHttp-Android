@@ -64,9 +64,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public enum ReturnStrategy {
         DOUBLE, // You'll get called back into twice, once for cached result and once for network delivery
-        ONCE_SOON, // You'll get the network response only if the cache misses
-        ONCE_LATE, // You'll get the cached response only if the network errors / fails
-        LIVE_ONLY // Skip the cache
+        NETWORK_IF_NO_CACHE, // You'll get the network response only if the cache misses
+        CACHE_IF_NETWORK_FAILS, // You'll get the cached response only if the network errors / fails
+        NETWORK_ONLY // Skip the cache
     }
 
     /** An event log tracing the lifetime of this request; for debugging. */

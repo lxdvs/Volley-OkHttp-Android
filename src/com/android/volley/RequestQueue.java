@@ -265,7 +265,7 @@ public class RequestQueue {
         request.addMarker("add-to-queue");
 
         // If the request is uncacheable, skip the cache queue and go straight to the network.
-        if (request.getReturnStrategy() == ReturnStrategy.LIVE_ONLY) {
+        if (request.getReturnStrategy() == ReturnStrategy.NETWORK_ONLY) {
             mNetworkQueue.add(request);
             return request;
         }
