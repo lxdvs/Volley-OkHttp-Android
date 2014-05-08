@@ -21,6 +21,8 @@ import java.util.concurrent.BlockingQueue;
 import android.os.Process;
 import android.util.Log;
 
+import com.android.volley.Request.ReturnStrategy;
+
 /**
  * Provides a thread for performing cache triage on a queue of requests.
  *
@@ -97,7 +99,7 @@ public class CacheDispatcher extends Thread {
                     request.finish("cache-discard-canceled");
                     continue;
                 }
-
+                
                 // Attempt to retrieve this item from cache.
                 Cache.Entry entry = mCache.get(request.getCacheKey());
                 if (entry == null) {
@@ -131,7 +133,7 @@ public class CacheDispatcher extends Thread {
                     request.addMarker("cache-hit-refresh-needed");
                     request.setCacheEntry(entry);
 
-                    if (request.softDeliveryOnlyOnError()) {
+                    if (request.getReturnStrategy() == ReturnStrategy.ONCE_LATE) {
                         request.mCacheResponse = response;
                         request.addMarker("cache-error-delivery-response-set");
                         mNetworkQueue.put(request);
@@ -146,6 +148,7 @@ public class CacheDispatcher extends Thread {
                             @Override
                             public void run() {
                                 try {
+                                    
                                     mNetworkQueue.put(request);
                                 } catch (InterruptedException e) {
                                     // Not much we can do about this.

@@ -31,6 +31,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Pair;
 
+import com.android.volley.Request.ReturnStrategy;
+
 /**
  * A request dispatch queue with a thread pool of dispatchers.
  *
@@ -263,7 +265,7 @@ public class RequestQueue {
         request.addMarker("add-to-queue");
 
         // If the request is uncacheable, skip the cache queue and go straight to the network.
-        if (!request.shouldRetrieveCache()) {
+        if (request.getReturnStrategy() == ReturnStrategy.LIVE_ONLY) {
             mNetworkQueue.add(request);
             return request;
         }

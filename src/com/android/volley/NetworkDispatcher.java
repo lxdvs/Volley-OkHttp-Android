@@ -20,6 +20,8 @@ import android.net.TrafficStats;
 import android.os.Build;
 import android.os.Process;
 
+import com.android.volley.Request.ReturnStrategy;
+
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -129,11 +131,20 @@ public class NetworkDispatcher extends Thread {
 
                 // Post the response back.
                 request.markDelivered();
+                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.ONCE_SOON) {
+                    continue;
+                }
                 mDelivery.postResponse(request, response);
             } catch (VolleyError volleyError) {
+                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.ONCE_SOON) {
+                    continue;
+                }
                 parseAndDeliverNetworkError(request, volleyError);
             } catch (Exception e) {
                 VolleyLog.e(e, "Unhandled exception %s", e.toString());
+                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.ONCE_SOON) {
+                    continue;
+                }
                 mDelivery.postError(request, new VolleyError(e));
             }
         }
