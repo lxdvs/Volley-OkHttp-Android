@@ -16,13 +16,6 @@
 
 package com.android.volley;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Collections;
-import java.util.Map;
-
-import org.apache.http.HttpEntity;
-
 import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.Handler;
@@ -31,6 +24,13 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 
 import com.android.volley.VolleyLog.MarkerLog;
+
+import org.apache.http.HttpEntity;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Base class for all network requests.
@@ -58,6 +58,16 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         int TRACE = 6;
         int PATCH = 7;
     }
+    
+    /**
+     * Supported request methods.
+     */
+    public enum ReturnStrategy {
+        DOUBLE, // You'll get called back into twice, once for cached result and once for network delivery
+        NETWORK_IF_NO_CACHE, // You'll get the network response only if the cache misses
+        CACHE_IF_NETWORK_FAILS, // You'll get the cached response only if the network errors / fails
+        NETWORK_ONLY // Skip the cache
+    }
 
     /** An event log tracing the lifetime of this request; for debugging. */
     private final MarkerLog mEventLog = isMarkerLogEnabled() ? new MarkerLog() : null;
@@ -67,6 +77,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * TRACE, and PATCH.
      */
     private final int mMethod;
+    
+    protected ReturnStrategy mReturnStrategy = ReturnStrategy.DOUBLE;
 
     /** URL of this request. */
     private final String mUrl;
@@ -85,9 +97,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /** Whether or not responses to this request should be cached. */
     private boolean mShouldCache = true;
-    
-    /** Whether or not responses to this request should retrieve from the cache. */
-    private boolean mShouldRetrieveCache = true;
 
     /** Whether or not this request has been canceled. */
     private boolean mCanceled = false;
@@ -465,23 +474,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public final boolean shouldCache() {
         return mShouldCache;
     }
-    
-    /**
-     * Set whether this request should retrieve cache entries as opposed to making
-     * a live network request.
-     * @param shouldRetrieveCache false to make the request NOT use the cache. The /response/,
-     * however, will still be cached (see also {@link #setShouldCache(boolean)})
-     */
-    public final void setShouldRetrieveCache(boolean shouldRetrieveCache) {
-        mShouldRetrieveCache = shouldRetrieveCache;
-    }
-    
-    /**
-     * Returns true if responses to this request should retrieve cache entries.
-     */
-    public final boolean shouldRetrieveCache() {
-        return mShouldRetrieveCache;
-    }
 
     /**
      * Priority values.  Requests will be processed from higher priorities to
@@ -526,10 +518,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     public Response<?> mCacheResponse;
-
-    public boolean softDeliveryOnlyOnError() {
-        return false;
-    }
 
     /**
      * Returns true if this request has had a response delivered for it.
@@ -603,5 +591,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         String trafficStatsTag = "0x" + Integer.toHexString(getTrafficStatsTag());
         return (mCanceled ? "[X] " : "[ ] ") + getUrl() + " " + trafficStatsTag + " "
                 + getPriority() + " " + mSequence;
+    }
+    
+    public ReturnStrategy getReturnStrategy() {
+        return mReturnStrategy;
+    }
+    public void setReturnStrategy(ReturnStrategy strategy) {
+        mReturnStrategy = strategy;
     }
 }
