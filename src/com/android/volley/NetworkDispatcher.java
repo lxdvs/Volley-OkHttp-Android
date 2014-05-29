@@ -130,10 +130,10 @@ public class NetworkDispatcher extends Thread {
                 }
 
                 // Post the response back.
-                request.markDelivered();
                 if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
                     continue;
                 }
+                request.markDelivered();
                 mDelivery.postResponse(request, response);
             } catch (VolleyError volleyError) {
                 if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
