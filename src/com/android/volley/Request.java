@@ -118,6 +118,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #Request(int, String, com.android.volley.Response.ErrorListener)}.
      */
+    @Deprecated
     public Request(String url, Response.ErrorListener listener) {
         this(Method.DEPRECATED_GET_OR_POST, url, listener);
     }
@@ -134,14 +135,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         mErrorListener = listener;
         setRetryPolicy(new DefaultRetryPolicy());
 
-        int trafficTag;
-        try {
-            trafficTag = TextUtils.isEmpty(url) ? 0: Uri.parse(url).getHost().hashCode();
-        } catch (Exception e) {
-            trafficTag = 0;
-            // URI parsing here is error-prone
-        }
-        mDefaultTrafficStatsTag = trafficTag;
+        mDefaultTrafficStatsTag = findDefaultTrafficStatsTag(url);
     }
 
     /**
@@ -154,9 +148,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * Set a tag on this request. Can be used to cancel all requests with this
      * tag by {@link RequestQueue#cancelAll(Object)}.
+     *
+     * @return This Request object to allow for chaining.
      */
-    public void setTag(Object tag) {
+    public Request<?> setTag(Object tag) {
         mTag = tag;
+        return this;
     }
 
     /**
@@ -175,10 +172,29 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
-     * Sets the retry policy for this request.
+     * @return The hashcode of the URL's host component, or 0 if there is none.
      */
-    public void setRetryPolicy(RetryPolicy retryPolicy) {
+    private static int findDefaultTrafficStatsTag(String url) {
+        if (!TextUtils.isEmpty(url)) {
+            Uri uri = Uri.parse(url);
+            if (uri != null) {
+                String host = uri.getHost();
+                if (host != null) {
+                    return host.hashCode();
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Sets the retry policy for this request.
+     *
+     * @return This Request object to allow for chaining.
+     */
+    public Request<?> setRetryPolicy(RetryPolicy retryPolicy) {
         mRetryPolicy = retryPolicy;
+        return this;
     }
 
     /**
@@ -230,16 +246,22 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * Associates this request with the given queue. The request queue will be notified when this
      * request has finished.
+     *
+     * @return This Request object to allow for chaining.
      */
-    public void setRequestQueue(RequestQueue requestQueue) {
+    public Request<?> setRequestQueue(RequestQueue requestQueue) {
         mRequestQueue = requestQueue;
+        return this;
     }
 
     /**
      * Sets the sequence number of this request.  Used by {@link RequestQueue}.
+     *
+     * @return This Request object to allow for chaining.
      */
-    public final void setSequence(int sequence) {
+    public final Request<?> setSequence(int sequence) {
         mSequence = sequence;
+        return this;
     }
 
     /**
@@ -280,9 +302,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * Annotates this request with an entry retrieved for it from cache.
      * Used for cache coherency support.
+     *
+     * @return This Request object to allow for chaining.
      */
-    public void setCacheEntry(Cache.Entry entry) {
+    public Request<?> setCacheEntry(Cache.Entry entry) {
         mCacheEntry = entry;
+        return this;
     }
 
     /**
@@ -327,6 +352,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #getParams()} instead.
      */
+    @Deprecated
     protected Map<String, String> getPostParams() throws AuthFailureError {
         return getParams();
     }
@@ -345,6 +371,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #getParamsEncoding()} instead.
      */
+    @Deprecated
     protected String getPostParamsEncoding() {
         return getParamsEncoding();
     }
@@ -352,6 +379,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * @deprecated Use {@link #getBodyContentType()} instead.
      */
+    @Deprecated
     public String getPostBodyContentType() {
         return getBodyContentType();
     }
@@ -363,6 +391,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @deprecated Use {@link #getBody()} instead.
      */
+    @Deprecated
     public byte[] getPostBody() throws AuthFailureError {
         // Note: For compatibility with legacy clients of volley, this implementation must remain
         // here instead of simply calling the getBody() function because this function must
@@ -440,9 +469,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * Set whether or not responses to this request should be cached.
+     *
+     * @return This Request object to allow for chaining.
      */
-    public final void setShouldCache(boolean shouldCache) {
+    public final Request<?> setShouldCache(boolean shouldCache) {
         mShouldCache = shouldCache;
+        return this;
     }
 
     /**

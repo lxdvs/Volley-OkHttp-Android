@@ -1,6 +1,9 @@
 .classpath
 .project
-bin/*
-gen/*
+bin
+gen
 tests/bin/*
 tests/gen/*
+.gradle
+build
+.settings
