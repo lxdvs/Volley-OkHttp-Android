@@ -99,7 +99,6 @@ public class ExecutorDelivery implements ResponseDelivery {
         @Override
         public void run() {
             // If this request has canceled, finish it and don't deliver.
-
             if (mRequest.isCanceled()) {
                 mRequest.finish("canceled-at-delivery");
                 return;
