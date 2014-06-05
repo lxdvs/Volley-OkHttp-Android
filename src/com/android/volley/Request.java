@@ -311,17 +311,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
-     * @return false if normal cache eviction policies (probably LRU) apply,
-     * true if you want the entry to never be evicted. Note that the
-     * entry will still update with request completion. Also note that the Cache
-     * implementation must handle this, and {@link DiskBasedCache} is the only implementation
-     * to do so at this point.
-     */
-    public boolean isPermaCache() {
-        return false;
-    }
-
-    /**
      * Annotates this request with an entry retrieved for it from cache.
      * Used for cache coherency support.
      *
