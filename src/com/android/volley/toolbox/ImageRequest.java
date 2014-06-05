@@ -180,14 +180,14 @@ public class ImageRequest extends Request<Bitmap> {
         }
 
         if (bitmap == null) {
-            return Response.error(new ParseError());
+            return Response.error(new ParseError(response));
         } else {
             return Response.success(bitmap, HttpHeaderParser.parseCacheHeaders(response));
         }
     }
 
     @Override
-    protected void deliverResponse(Bitmap response, boolean intermediate) {
+    protected void deliverResponse(Bitmap response) {
         mListener.onResponse(response);
     }
 

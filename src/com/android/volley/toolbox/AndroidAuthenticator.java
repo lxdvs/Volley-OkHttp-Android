@@ -33,17 +33,21 @@ public class AndroidAuthenticator implements Authenticator {
     private final Context mContext;
     private final Account mAccount;
     private final String mAuthTokenType;
+    private final boolean mNotifyAuthFailure;
 
     /**
      * Creates a new authenticator.
      * @param context Context for accessing AccountManager
      * @param account Account to authenticate as
      * @param authTokenType Auth token type passed to AccountManager
+     * @param notifyAuthFailure Whether to raise a notification upon auth failure
      */
-    public AndroidAuthenticator(Context context, Account account, String authTokenType) {
+    public AndroidAuthenticator(Context context, Account account, String authTokenType,
+            boolean notifyAuthFailure) {
         mContext = context;
         mAccount = account;
         mAuthTokenType = authTokenType;
+        mNotifyAuthFailure = notifyAuthFailure;
     }
 
     /**
@@ -53,11 +57,13 @@ public class AndroidAuthenticator implements Authenticator {
         return mAccount;
     }
 
+    // TODO: Figure out what to do about notifyAuthFailure
+    @SuppressWarnings("deprecation")
     @Override
     public String getAuthToken() throws AuthFailureError {
         final AccountManager accountManager = AccountManager.get(mContext);
         AccountManagerFuture<Bundle> future = accountManager.getAuthToken(mAccount,
-                mAuthTokenType, false, null, null);
+                mAuthTokenType, mNotifyAuthFailure, null, null);
         Bundle result;
         try {
             result = future.getResult();

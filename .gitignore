@@ -1,7 +1,13 @@
 .classpath
 .project
-bin/*
-gen/*
+bin
+gen
 tests/bin/*
 tests/gen/*
+<<<<<<< HEAD
 build
+=======
+.gradle
+build
+.settings
+>>>>>>> master

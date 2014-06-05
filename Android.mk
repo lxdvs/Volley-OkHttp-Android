@@ -19,7 +19,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := volley
-LOCAL_SDK_VERSION := 14
+LOCAL_SDK_VERSION := 17
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
@@ -28,5 +28,6 @@ include $(BUILD_STATIC_JAVA_LIBRARY)
 # TODO: Not yet.
 #$(call dist-for-goals, dist_files, $(LOCAL_BUILT_MODULE):volley.jar)
 
-# TODO: Build the tests as an APK here
+# Include build files in subdirectories
+include $(call all-makefiles-under,$(LOCAL_PATH))
 

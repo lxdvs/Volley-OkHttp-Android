@@ -178,7 +178,7 @@ public class RequestQueueTest extends InstrumentationTestCase {
         private final AtomicInteger mDeliveredCount;
 
         public DelayedRequest(long delayMillis, AtomicInteger parsed, AtomicInteger delivered) {
-            super("http://buganizer/", null);
+            super(Request.Method.GET, "http://buganizer/", null);
             mDelayMillis = delayMillis;
             mParsedCount = parsed;
             mDeliveredCount = delivered;
@@ -192,7 +192,7 @@ public class RequestQueueTest extends InstrumentationTestCase {
         }
 
         @Override
-        protected void deliverResponse(Object response, boolean intermediate) {
+        protected void deliverResponse(Object response) {
             mDeliveredCount.incrementAndGet();
         }
     }

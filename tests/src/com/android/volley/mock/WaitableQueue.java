@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 // TODO: the name of this class sucks
-@SuppressWarnings({ "serial", "rawtypes" })
-public class WaitableQueue extends PriorityBlockingQueue<Request> {
+@SuppressWarnings("serial")
+public class WaitableQueue extends PriorityBlockingQueue<Request<?>> {
     private final Request<?> mStopRequest = new MagicStopRequest();
     private final Semaphore mStopEvent = new Semaphore(0);
 
@@ -52,7 +52,7 @@ public class WaitableQueue extends PriorityBlockingQueue<Request> {
 
     private static class MagicStopRequest extends Request<Object> {
         public MagicStopRequest() {
-            super("", null);
+            super(Request.Method.GET, "", null);
         }
 
         @Override
@@ -66,7 +66,7 @@ public class WaitableQueue extends PriorityBlockingQueue<Request> {
         }
 
         @Override
-        protected void deliverResponse(Object response, boolean intermediate) {
+        protected void deliverResponse(Object response) {
         }
     }
 }

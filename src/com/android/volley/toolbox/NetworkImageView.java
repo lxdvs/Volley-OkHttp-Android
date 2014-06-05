@@ -23,6 +23,9 @@ import android.graphics.drawable.TransitionDrawable;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.text.TextUtils;
+import android.util.AttributeSet;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 
 import com.android.volley.VolleyError;
@@ -68,16 +71,16 @@ public class NetworkImageView extends ImageView {
     }
 
     /**
-     * Sets URL of the image that should be loaded into this view. Note that calling this will immediately either set the cached image (if available) or the
-     * default image specified by {@link NetworkImageView#setDefaultImageResId(int)} on the view.
-     * 
-     * NOTE: If applicable, {@link NetworkImageView#setDefaultImageResId(int)} and {@link NetworkImageView#setErrorImageResId(int)} should be called prior to
-     * calling this function.
-     * 
-     * @param url
-     *            The URL that should be loaded into this ImageView.
-     * @param imageLoader
-     *            ImageLoader that will be used to make the request.
+     * Sets URL of the image that should be loaded into this view. Note that calling this will
+     * immediately either set the cached image (if available) or the default image specified by
+     * {@link NetworkImageView#setDefaultImageResId(int)} on the view.
+     *
+     * NOTE: If applicable, {@link NetworkImageView#setDefaultImageResId(int)} and
+     * {@link NetworkImageView#setErrorImageResId(int)} should be called prior to calling
+     * this function.
+     *
+     * @param url The URL that should be loaded into this ImageView.
+     * @param imageLoader ImageLoader that will be used to make the request.
      */
     public void setImageUrl(String url, ImageLoader imageLoader) {
         mUrl = url;
@@ -87,14 +90,16 @@ public class NetworkImageView extends ImageView {
     }
 
     /**
-     * Sets the default image resource ID to be used for this view until the attempt to load it completes.
+     * Sets the default image resource ID to be used for this view until the attempt to load it
+     * completes.
      */
     public void setDefaultImageResId(int defaultImage) {
         mDefaultImageId = defaultImage;
     }
 
     /**
-     * Sets the error image resource ID to be used for this view in the event that the image requested fails to load.
+     * Sets the error image resource ID to be used for this view in the event that the image
+     * requested fails to load.
      */
     public void setErrorImageResId(int errorImage) {
         mErrorImageId = errorImage;
@@ -102,16 +107,22 @@ public class NetworkImageView extends ImageView {
 
     /**
      * Loads the image for the view if it isn't already loaded.
-     * 
-     * @param isInLayoutPass
-     *            True if this was invoked from a layout pass, false otherwise.
+     * @param isInLayoutPass True if this was invoked from a layout pass, false otherwise.
      */
-    private void loadImageIfNecessary(final boolean isInLayoutPass) {
+    void loadImageIfNecessary(final boolean isInLayoutPass) {
         int width = getWidth();
         int height = getHeight();
 
-        // if the view's bounds aren't known yet, hold off on loading the image.
-        if (width == 0 && height == 0) {
+        boolean wrapWidth = false, wrapHeight = false;
+        if (getLayoutParams() != null) {
+            wrapWidth = getLayoutParams().width == LayoutParams.WRAP_CONTENT;
+            wrapHeight = getLayoutParams().height == LayoutParams.WRAP_CONTENT;
+        }
+
+        // if the view's bounds aren't known yet, and this is not a wrap-content/wrap-content
+        // view, hold off on loading the image.
+        boolean isFullyWrapContent = wrapWidth && wrapHeight;
+        if (width == 0 && height == 0 && !isFullyWrapContent) {
             return;
         }
 
@@ -122,9 +133,11 @@ public class NetworkImageView extends ImageView {
                 mImageContainer.cancelRequest();
                 mImageContainer = null;
             }
+
             if (mDefaultImageId != 0) {
                 setTransientImageResource(mDefaultImageId);
             }
+
             return;
         }
 
@@ -136,9 +149,13 @@ public class NetworkImageView extends ImageView {
             } else {
                 // if there is a pre-existing request, cancel it if it's fetching a different URL.
                 mImageContainer.cancelRequest();
-                setImageBitmap(null);
+                setDefaultImageOrNull();
             }
         }
+
+        // Calculate the max image width / height to use while ignoring WRAP_CONTENT dimens.
+        int maxWidth = wrapWidth ? 0 : width;
+        int maxHeight = wrapHeight ? 0 : height;
 
         // The pre-existing content of this view didn't match the current URL. Load the new image
         // from the network.
@@ -192,7 +209,7 @@ public class NetworkImageView extends ImageView {
                             setTransientImageResource(mDefaultImageId);
                         }
                     }
-                }, false);
+                }, maxWidth, maxHeight);
 
         // update the ImageContainer to be the new bitmap container.
         mImageContainer = newContainer;
@@ -200,6 +217,15 @@ public class NetworkImageView extends ImageView {
 
     public void setFadeEnabled(boolean fade) {
         mFade = fade;
+    }
+
+    private void setDefaultImageOrNull() {
+        if(mDefaultImageId != 0) {
+            setImageResource(mDefaultImageId);
+        }
+        else {
+            setImageBitmap(null);
+        }
     }
 
     @Override
@@ -225,7 +251,6 @@ public class NetworkImageView extends ImageView {
     public void setImageResource(int resId) {
         super.setImageResource(resId);
         mDefaultImageId = resId;
-        mUrl = null;
     }
 
     public void setTransientImageResource(int resId) {
