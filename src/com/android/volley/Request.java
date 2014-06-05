@@ -311,8 +311,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
-<<<<<<< HEAD
-=======
      * @return false if normal cache eviction policies (probably LRU) apply,
      * true if you want the entry to never be evicted. Note that the
      * entry will still update with request completion. Also note that the Cache
@@ -324,7 +322,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
->>>>>>> master
      * Annotates this request with an entry retrieved for it from cache.
      * Used for cache coherency support.
      *
