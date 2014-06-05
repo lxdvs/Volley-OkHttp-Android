@@ -395,7 +395,7 @@ public class DiskBasedCache implements Cache {
             entry.serverDate = readLong(is);
             entry.ttl = readLong(is);
             entry.softTtl = readLong(is);
-            entry.responseHeaders = readStringStringMap((ObjectInputStream) is);
+            entry.responseHeaders = readStringStringMap(is);
             return entry;
         }
 
@@ -424,7 +424,7 @@ public class DiskBasedCache implements Cache {
                 writeLong(os, serverDate);
                 writeLong(os, ttl);
                 writeLong(os, softTtl);
-                writeStringStringMap(responseHeaders, (ObjectOutputStream) os);
+                writeStringStringMap(responseHeaders, os);
                 os.flush();
                 return true;
             } catch (IOException e) {
@@ -436,16 +436,15 @@ public class DiskBasedCache implements Cache {
         /**
          * Writes all entries of {@code map} into {@code oos}.
          */
-        private static void writeStringStringMap(Map<String, String> map, ObjectOutputStream oos)
-                throws IOException {
+        static void writeStringStringMap(Map<String, String> map, OutputStream os) throws IOException {
             if (map != null) {
-                oos.writeInt(map.size());
+                writeInt(os, map.size());
                 for (Map.Entry<String, String> entry : map.entrySet()) {
-                    oos.writeUTF(entry.getKey());
-                    oos.writeUTF(entry.getValue());
+                    writeString(os, entry.getKey());
+                    writeString(os, entry.getValue());
                 }
             } else {
-                oos.writeInt(0);
+                writeInt(os, 0);
             }
         }
 
@@ -453,15 +452,14 @@ public class DiskBasedCache implements Cache {
          * @return a string to string map which contains the entries read from {@code ois}
          *     previously written by {@link #writeStringStringMap}
          */
-        private static Map<String, String> readStringStringMap(ObjectInputStream ois)
-                throws IOException {
-            int size = ois.readInt();
+        static Map<String, String> readStringStringMap(InputStream is) throws IOException {
+            int size = readInt(is);
             Map<String, String> result = (size == 0)
                     ? Collections.<String, String>emptyMap()
                     : new HashMap<String, String>(size);
             for (int i = 0; i < size; i++) {
-                String key = ois.readUTF().intern();
-                String value = ois.readUTF().intern();
+                String key = readString(is).intern();
+                String value = readString(is).intern();
                 result.put(key, value);
             }
             return result;

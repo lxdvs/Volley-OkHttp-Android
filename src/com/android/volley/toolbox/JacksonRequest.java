@@ -39,7 +39,6 @@ public class JacksonRequest< T extends JacksonRequest > extends Request< T > {
     private final Listener< T > listener;
     private Properties mPostFields;
     private String mJsonPost;
-    private boolean mIntermediate;
     private boolean mPrintJson;
 
     /**
@@ -64,9 +63,8 @@ public class JacksonRequest< T extends JacksonRequest > extends Request< T > {
     }
 
     @Override
-    protected void deliverResponse(T response, boolean intermediate) {
+    protected void deliverResponse(T response) {
         preProcess();
-        mIntermediate = intermediate;
         if (listener != null) {
             listener.onResponse(response);
         }
@@ -177,10 +175,6 @@ public class JacksonRequest< T extends JacksonRequest > extends Request< T > {
 
     public void setJsonPost(String json) {
         this.mJsonPost = json;
-    }
-
-    public boolean getIntermediate() {
-        return mIntermediate;
     }
 
 	public void setPrintJson(boolean mPrintJson) {

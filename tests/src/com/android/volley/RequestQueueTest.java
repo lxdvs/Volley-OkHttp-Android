@@ -192,7 +192,7 @@ public class RequestQueueTest extends InstrumentationTestCase {
         }
 
         @Override
-        protected void deliverResponse(Object response, boolean intermediate) {
+        protected void deliverResponse(Object response) {
             mDeliveredCount.incrementAndGet();
         }
     }

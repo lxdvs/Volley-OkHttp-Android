@@ -595,9 +595,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * be non-null; responses that fail to parse are not delivered.
      * @param response The parsed response returned by
      * {@link #parseNetworkResponse(NetworkResponse)}
-     * @param intermediate 
      */
-    abstract protected void deliverResponse(T response, boolean intermediate);
+    abstract protected void deliverResponse(T response);
 
     /**
      * Delivers error message to the ErrorListener that the Request was

@@ -61,7 +61,7 @@ public class MockRequest extends Request<byte[]> {
     public boolean parseResponse_called = false;
 
     @Override
-    protected void deliverResponse(byte[] response, boolean intermediate) {
+    protected void deliverResponse(byte[] response) {
         deliverResponse_called = true;
     }
 

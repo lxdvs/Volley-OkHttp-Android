@@ -66,7 +66,7 @@ public class WaitableQueue extends PriorityBlockingQueue<Request<?>> {
         }
 
         @Override
-        protected void deliverResponse(Object response, boolean intermediate) {
+        protected void deliverResponse(Object response) {
         }
     }
 }

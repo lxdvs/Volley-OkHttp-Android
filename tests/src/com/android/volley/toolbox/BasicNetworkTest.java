@@ -55,7 +55,7 @@ public class BasicNetworkTest extends AndroidTestCase {
             }
 
             @Override
-            protected void deliverResponse(String response, boolean intermediate) {
+            protected void deliverResponse(String response) {
             }
 
             @Override

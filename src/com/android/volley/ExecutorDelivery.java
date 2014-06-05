@@ -106,7 +106,7 @@ public class ExecutorDelivery implements ResponseDelivery {
 
             // Deliver a normal response or error, depending.
             if (mResponse.isSuccess()) {
-                mRequest.deliverResponse(mResponse.result, mResponse.intermediate);
+                mRequest.deliverResponse(mResponse.result);
             } else if (mRequest.getReturnStrategy() == ReturnStrategy.CACHE_IF_NETWORK_FAILS && mRequest.mCacheResponse != null) {
                 mRequest.finish("got an error but delivered intermediate response");
             } else {

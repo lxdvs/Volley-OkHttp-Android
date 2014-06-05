@@ -251,7 +251,6 @@ public class NetworkImageView extends ImageView {
     public void setImageResource(int resId) {
         super.setImageResource(resId);
         mDefaultImageId = resId;
-        mUrl = null;
     }
 
     public void setTransientImageResource(int resId) {
