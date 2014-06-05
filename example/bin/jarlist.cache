@@ -1,9 +1,0 @@
-# cache for current jar dependency. DO NOT EDIT.
-# format is <lastModified> <length> <SHA-1> <path>
-# Encoding is UTF-8
-1381805406000 191738 d20be6a5ddd6f8cfd36ebf6dea329873a1c41f1b /Users/alexdavis/fun/volley-networking-android/libs/jackson-core-2.2.2.jar
-1377193774000 191738 d20be6a5ddd6f8cfd36ebf6dea329873a1c41f1b /Users/alexdavis/fun/volley-networking-android/example/libs/jackson-core-2.2.2.jar
-1381805406000 866104 3c8f6018eaa72d43b261181e801e6f8676c16ef6 /Users/alexdavis/fun/volley-networking-android/libs/jackson-databind-2.2.2.jar
-1377193774000 866104 3c8f6018eaa72d43b261181e801e6f8676c16ef6 /Users/alexdavis/fun/volley-networking-android/example/libs/jackson-databind-2.2.2.jar
-1377193774000 33491 285cb9c666f0f0f3dd8a1be04e1f457eb7b15113 /Users/alexdavis/fun/volley-networking-android/example/libs/jackson-annotations-2.2.2.jar
-1381805406000 33491 285cb9c666f0f0f3dd8a1be04e1f457eb7b15113 /Users/alexdavis/fun/volley-networking-android/libs/jackson-annotations-2.2.2.jar
