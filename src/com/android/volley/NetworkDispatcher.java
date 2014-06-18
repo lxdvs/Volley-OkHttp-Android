@@ -136,7 +136,7 @@ public class NetworkDispatcher extends Thread {
 
                 // Post the response back.
                 if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
-                    continue;
+                    request.cancel();
                 }
                 request.markDelivered();
                 mDelivery.postResponse(request, response);
