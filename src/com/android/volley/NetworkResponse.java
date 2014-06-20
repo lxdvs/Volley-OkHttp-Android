@@ -60,6 +60,8 @@ public class NetworkResponse {
     /** The HTTP status code. */
     public final int statusCode;
 
+    public boolean isImage = false;
+
     /** Raw data from this response. */
     public final byte[] data;
 

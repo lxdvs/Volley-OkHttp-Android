@@ -69,6 +69,9 @@ public interface Cache {
         /** The data returned from cache. */
         public byte[] data;
 
+        /** Is cache item an image */
+        public boolean isImage;
+
         /** ETag for cache coherency. */
         public String etag;
 
