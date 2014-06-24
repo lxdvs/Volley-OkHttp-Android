@@ -68,7 +68,7 @@ public class DiskBasedCache implements Cache {
     private static final float HYSTERESIS_FACTOR = 0.9f;
 
     /** Magic number for current version of cache file format. */
-    private static final int CACHE_MAGIC = 0x20120504;
+    private static final int CACHE_MAGIC = 0x20140623;
 
     private ConcurrentHashMap<String, Entry> mMemoryMap = new ConcurrentHashMap<String, Entry>(16, 0.75f);
 
@@ -232,7 +232,12 @@ public class DiskBasedCache implements Cache {
         try {
             FileOutputStream fos = new FileOutputStream(file);
             CacheHeader e = new CacheHeader(key, entry);
-            e.writeHeader(fos);
+            boolean success = e.writeHeader(fos);
+            if (!success) {
+                fos.close();
+                VolleyLog.d("Failed to write header for %s", file.getAbsolutePath());
+                throw new IOException();
+            }
             fos.write(entry.data);
             fos.close();
             putEntry(key, e);
