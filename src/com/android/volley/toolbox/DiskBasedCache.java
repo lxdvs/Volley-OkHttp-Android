@@ -52,10 +52,10 @@ public class DiskBasedCache implements Cache {
     private final File mRootDirectory;
 
     /** The maximum size of the cache in bytes. */
-    private final int mMaxCacheSizeInBytes;
+    private final long mMaxCacheSizeInBytes;
 
     /** Default maximum disk usage in bytes. */
-    private static final int DEFAULT_DISK_USAGE_BYTES = 5 * 1024 * 1024;
+    private static final long DEFAULT_DISK_USAGE_BYTES = 10L * 1024 * 1024;
 
     /** High water mark percentage for the cache */
     private static final float HYSTERESIS_FACTOR = 0.9f;
@@ -68,7 +68,7 @@ public class DiskBasedCache implements Cache {
      * @param rootDirectory The root directory of the cache.
      * @param maxCacheSizeInBytes The maximum size of the cache in bytes.
      */
-    public DiskBasedCache(File rootDirectory, int maxCacheSizeInBytes) {
+    public DiskBasedCache(File rootDirectory, long maxCacheSizeInBytes) {
         mRootDirectory = rootDirectory;
         mMaxCacheSizeInBytes = maxCacheSizeInBytes;
     }
@@ -192,7 +192,7 @@ public class DiskBasedCache implements Cache {
      */
     @Override
     public synchronized void put(String key, Entry entry) {
-        pruneIfNeeded(entry.data.length);
+        pruneIfNeeded(entry.data.length, true);
         File file = getFileForKey(key);
         try {
             FileOutputStream fos = new FileOutputStream(file);
@@ -246,7 +246,7 @@ public class DiskBasedCache implements Cache {
      * Prunes the cache to fit the amount of bytes specified.
      * @param neededSpace The amount of bytes we are trying to fit into the cache.
      */
-    private void pruneIfNeeded(int neededSpace) {
+    private void pruneIfNeeded(int neededSpace, boolean preferImagePruning) {
         if ((mTotalSize + neededSpace) < mMaxCacheSizeInBytes) {
             return;
         }
@@ -262,7 +262,7 @@ public class DiskBasedCache implements Cache {
         while (iterator.hasNext()) {
             Map.Entry<String, CacheHeader> entry = iterator.next();
             CacheHeader e = entry.getValue();
-            if (e.ttl == Long.MAX_VALUE) {
+            if (e.ttl == Long.MAX_VALUE || (preferImagePruning && !e.isImage)) {
                 continue;
             }
             boolean deleted = getFileForKey(e.key).delete();
@@ -278,6 +278,11 @@ public class DiskBasedCache implements Cache {
             if ((mTotalSize + neededSpace) < mMaxCacheSizeInBytes * HYSTERESIS_FACTOR) {
                 break;
             }
+        }
+
+        // we weren't able to remove enough images to find space
+        if (mTotalSize + neededSpace >= mMaxCacheSizeInBytes * HYSTERESIS_FACTOR && preferImagePruning) {
+            pruneIfNeeded(neededSpace, false);
         }
 
         if (VolleyLog.DEBUG) {
@@ -340,6 +345,9 @@ public class DiskBasedCache implements Cache {
         /** The key that identifies the cache entry. */
         public String key;
 
+        // is an image. We want to preferentially evict these.
+        public boolean isImage;
+
         /** ETag for cache coherence. */
         public String etag;
 
@@ -369,6 +377,7 @@ public class DiskBasedCache implements Cache {
             this.serverDate = entry.serverDate;
             this.ttl = entry.ttl;
             this.softTtl = entry.softTtl;
+            this.isImage = entry.isImage;
             this.responseHeaders = entry.responseHeaders;
         }
 

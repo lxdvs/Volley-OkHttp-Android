@@ -16,16 +16,16 @@
 
 package com.android.volley.toolbox;
 
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
+
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.ParseError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyLog;
-
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 
 /**
  * A canned request for getting an image at a given URL and calling
@@ -140,6 +140,7 @@ public class ImageRequest extends Request<Bitmap> {
      * The real guts of parseNetworkResponse. Broken out for readability.
      */
     private Response<Bitmap> doParse(NetworkResponse response) {
+        response.isImage = true;
         byte[] data = response.data;
         BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
         Bitmap bitmap = null;

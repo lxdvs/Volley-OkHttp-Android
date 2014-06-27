@@ -92,6 +92,7 @@ public class HttpHeaderParser {
 
         Cache.Entry entry = new Cache.Entry();
         entry.data = response.data;
+        entry.isImage = response.isImage;
         entry.etag = serverEtag;
         entry.softTtl = softExpire;
         entry.ttl = entry.softTtl;
