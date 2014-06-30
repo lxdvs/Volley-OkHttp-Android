@@ -164,20 +164,13 @@ public class ImageRequest extends Request<Bitmap> {
             decodeOptions.inJustDecodeBounds = false;
             // TODO(ficus): Do we need this or is it okay since API 8 doesn't support it?
             // decodeOptions.inPreferQualityOverSpeed = PREFER_QUALITY_OVER_SPEED;
-            decodeOptions.inSampleSize =
-                findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-            Bitmap tempBitmap =
-                BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+            int sampleSize = findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
+            decodeOptions.inSampleSize = sampleSize;
+            decodeOptions.inMutable = true;
 
-            // If necessary, scale down to the maximal acceptable size.
-            if (tempBitmap != null && (tempBitmap.getWidth() > desiredWidth ||
-                    tempBitmap.getHeight() > desiredHeight)) {
-                bitmap = Bitmap.createScaledBitmap(tempBitmap,
-                        desiredWidth, desiredHeight, true);
-                tempBitmap.recycle();
-            } else {
-                bitmap = tempBitmap;
-            }
+            bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+
+
         }
 
         if (bitmap == null) {
