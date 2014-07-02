@@ -15,8 +15,10 @@
  */
 package com.android.volley.toolbox;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -69,14 +71,17 @@ public class ImageLoader {
     /** Runnable for in-flight response delivery. */
     private Runnable mRunnable;
 
+    private Context mContext;
+
     /**
      * Simple cache adapter interface. If provided to the ImageLoader, it
      * will be used as an L1 cache before dispatch to Volley. Implementations
      * must not block. Implementation with an LruCache is recommended.
      */
     public interface ImageCache {
-        public Bitmap getBitmap(String url);
-        public void putBitmap(String url, Bitmap bitmap);
+        public CacheableBitmapDrawable getDrawable(String url);
+        public void putDrawable(String url, CacheableBitmapDrawable drawable);
+        Bitmap getOldestUnused(String cacheKey, int width, int height, Config inPreferredConfig, int sampleSize);
     }
 
     /**
@@ -84,7 +89,8 @@ public class ImageLoader {
      * @param queue The RequestQueue to use for making image requests.
      * @param imageCache The cache to use as an L1 cache.
      */
-    public ImageLoader(RequestQueue queue, ImageCache imageCache) {
+    public ImageLoader(Context context, RequestQueue queue, ImageCache imageCache) {
+        mContext = context;
         mRequestQueue = queue;
         mCache = imageCache;
     }
@@ -109,8 +115,8 @@ public class ImageLoader {
 
             @Override
             public void onResponse(ImageContainer response, boolean isImmediate) {
-                if (response.getBitmap() != null) {
-                    view.setImageBitmap(response.getBitmap());
+                if (response.getDrawable() != null) {
+                    view.setImageDrawable(response.getDrawable());
                 } else if (defaultImageResId != 0) {
                     view.setImageResource(defaultImageResId);
                 }
@@ -155,7 +161,7 @@ public class ImageLoader {
     public boolean isCached(String requestUrl, int maxWidth, int maxHeight) {
         throwIfNotOnMainThread();
         String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
-        return mCache.getBitmap(cacheKey) != null;
+        return mCache.getDrawable(cacheKey) != null;
     }
 
     /**
@@ -194,7 +200,7 @@ public class ImageLoader {
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
         // Try to look up the request in the cache of remote images.
-        Bitmap cachedBitmap = mCache.getBitmap(cacheKey);
+        CacheableBitmapDrawable cachedBitmap = mCache.getDrawable(cacheKey);
         if (cachedBitmap != null) {
             // Return the cached bitmap.
             ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null);
@@ -222,9 +228,9 @@ public class ImageLoader {
         // The request is not already in flight. Send the new request to the network and
         // track it.
         Request<?> newRequest =
-            new ImageRequest(requestUrl, new Listener<Bitmap>() {
+            new ImageRequest(mContext, requestUrl, mCache, new Listener<CacheableBitmapDrawable>() {
                 @Override
-                public void onResponse(Bitmap response) {
+                public void onResponse(CacheableBitmapDrawable response) {
                     onGetImageSuccess(cacheKey, response);
                 }
             }, maxWidth, maxHeight,
@@ -255,16 +261,16 @@ public class ImageLoader {
      * @param cacheKey The cache key that is associated with the image request.
      * @param response The bitmap that was returned from the network.
      */
-    private void onGetImageSuccess(String cacheKey, Bitmap response) {
+    private void onGetImageSuccess(String cacheKey, CacheableBitmapDrawable response) {
         // cache the image that was fetched.
-        mCache.putBitmap(cacheKey, response);
+        mCache.putDrawable(cacheKey, response);
 
         // remove the request from the list of in-flight requests.
         BatchedImageRequest request = mInFlightRequests.remove(cacheKey);
 
         if (request != null) {
             // Update the response bitmap.
-            request.mResponseBitmap = response;
+            request.mResponseDrawable = response;
 
             // Send the batched response
             batchResponse(cacheKey, request);
@@ -297,7 +303,7 @@ public class ImageLoader {
          * The most relevant bitmap for the container. If the image was in cache, the
          * Holder to use for the final bitmap (the one that pairs to the requested URL).
          */
-        private Bitmap mBitmap;
+        private CacheableBitmapDrawable mDrawable;
 
         private final ImageListener mListener;
 
@@ -309,13 +315,13 @@ public class ImageLoader {
 
         /**
          * Constructs a BitmapContainer object.
-         * @param bitmap The final bitmap (if it exists).
+         * @param drawable The final bitmap (if it exists).
          * @param requestUrl The requested URL for this container.
          * @param cacheKey The cache key that identifies the requested URL for this container.
          */
-        public ImageContainer(Bitmap bitmap, String requestUrl,
+        public ImageContainer(CacheableBitmapDrawable drawable, String requestUrl,
                 String cacheKey, ImageListener listener) {
-            mBitmap = bitmap;
+            mDrawable = drawable;
             mRequestUrl = requestUrl;
             mCacheKey = cacheKey;
             mListener = listener;
@@ -350,8 +356,12 @@ public class ImageLoader {
         /**
          * Returns the bitmap associated with the request URL if it has been loaded, null otherwise.
          */
+        public CacheableBitmapDrawable getDrawable() {
+            return mDrawable;
+        }
+
         public Bitmap getBitmap() {
-            return mBitmap;
+            return mDrawable != null ? mDrawable.getBitmap() : null;
         }
 
         /**
@@ -406,7 +416,7 @@ public class ImageLoader {
         private final Request<?> mRequest;
 
         /** The result of the request being tracked by this item */
-        private Bitmap mResponseBitmap;
+        private CacheableBitmapDrawable mResponseDrawable;
 
         /** Error if one occurred for this response */
         private VolleyError mError;
@@ -485,7 +495,7 @@ public class ImageLoader {
                                 continue;
                             }
                             if (bir.getError() == null) {
-                                container.mBitmap = bir.mResponseBitmap;
+                                container.mDrawable = bir.mResponseDrawable;
                                 container.mListener.onResponse(container, false);
                             } else {
                                 container.mListener.onErrorResponse(bir.getError());
