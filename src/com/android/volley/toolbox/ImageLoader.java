@@ -20,6 +20,7 @@ import android.graphics.Bitmap.Config;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.android.volley.Request;
@@ -171,6 +172,11 @@ public class ImageLoader {
         return get(requestUrl, listener, 0, 0);
     }
 
+    public ImageContainer get(String requestUrl, ImageListener imageListener,
+                              int maxWidth, int maxHeight) {
+        return get(requestUrl, imageListener, maxWidth, maxHeight, true);
+    }
+
     /**
      * Issues a bitmap request with the given URL if that image is not available
      * in the cache, and returns a bitmap container that contains all of the data
@@ -184,7 +190,7 @@ public class ImageLoader {
      *     the currently available image (default if remote is not loaded).
      */
     public ImageContainer get(String requestUrl, ImageListener imageListener,
-            int maxWidth, int maxHeight) {
+            int maxWidth, int maxHeight, boolean doubleRespond) {
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
         // Try to look up the request in the cache of remote images.
@@ -200,8 +206,10 @@ public class ImageLoader {
         ImageContainer imageContainer =
                 new ImageContainer(null, requestUrl, cacheKey, imageListener);
 
-        // Update the caller to let them know that they should use the default bitmap.
-        imageListener.onResponse(imageContainer, true);
+        if (doubleRespond) {
+            // Update the caller to let them know that they should use the default bitmap.
+            imageListener.onResponse(imageContainer, true);
+        }
 
         // Check to see if a request is already in-flight.
         BatchedImageRequest request = mInFlightRequests.get(cacheKey);
@@ -373,12 +381,12 @@ public class ImageLoader {
 			@Override
 			public void onResponse(ImageContainer response, boolean isImmediate) {
 				synchronized (block) {
-					block.notifyAll();
+                    block.notifyAll();
 				}
 			}
 		};
-		ImageContainer container = get(requestUrl, listener, 0, 0);
-		if (container == null) {
+		ImageContainer container = get(requestUrl, listener, 0, 0, false);
+		if (container == null || container.getBitmap() == null) {
 			try {
 				synchronized (block) {
 					block.wait();
