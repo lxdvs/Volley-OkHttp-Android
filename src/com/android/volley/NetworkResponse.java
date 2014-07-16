@@ -39,14 +39,19 @@ public class NetworkResponse {
         this.data = data;
         this.headers = headers;
         this.notModified = notModified;
-        
-        String inter;
-        try {
-            inter = new String(data, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            inter = "<error parse failed>";
+
+        // errorResponseString not needed if response is success
+        if (statusCode != HttpStatus.SC_OK) {
+            String inter;
+            try {
+                inter = new String(data, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                inter = "<error parse failed>";
+            }
+            errorResponseString = inter;
+        } else {
+            errorResponseString = null;
         }
-        errorResponseString = inter;
     }
 
     public NetworkResponse(byte[] data) {
