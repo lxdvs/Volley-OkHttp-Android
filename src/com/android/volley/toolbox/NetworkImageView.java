@@ -250,11 +250,6 @@ public class NetworkImageView extends ImageView {
     }
 
     @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-    }
-
-    @Override
     protected void onDetachedFromWindow() {
         if (mImageContainer != null) {
             // If the view was bound to an image request, cancel it and clear
