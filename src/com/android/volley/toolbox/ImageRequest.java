@@ -177,7 +177,6 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
             decodeOptions.inSampleSize = sampleSize;
             decodeOptions.inMutable = true;
 
-            // this seems to not quite work yet
             Bitmap inBitmap = mCache.getOldestUnused(getCacheKey(), actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
             if (inBitmap != null) {
                 decodeOptions.inBitmap = inBitmap;
