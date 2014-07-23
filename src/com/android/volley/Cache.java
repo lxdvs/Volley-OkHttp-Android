@@ -32,6 +32,13 @@ public interface Cache {
     public Entry get(String key);
 
     /**
+     * Retrieves an entry from the cache without the actual cache data.\.
+     * @param key Cache key
+     * @return An {@link Entry} or null in the event of a cache miss
+     */
+    public Entry getHeaders(String key);
+
+    /**
      * Adds or replaces an entry to the cache.
      * @param key Cache key
      * @param entry Data to store and metadata for cache coherency, TTL, etc.

@@ -98,6 +98,16 @@ public class DiskBasedCache implements Cache {
         VolleyLog.d("Cache cleared.");
     }
 
+    @Override
+    public Entry getHeaders(String key) {
+        CacheHeader entry = mEntries.get(key);
+        // if the entry does not exist, return.
+        if (entry == null) {
+            return null;
+        }
+        return entry.toCacheEntry(null);
+    }
+
     /**
      * Returns the cache entry with the specified key if it exists, null otherwise.
      */

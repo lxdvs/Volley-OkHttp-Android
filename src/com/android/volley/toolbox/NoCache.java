@@ -32,6 +32,9 @@ public class NoCache implements Cache {
     }
 
     @Override
+    public Entry getHeaders(String key) { return null;}
+
+    @Override
     public void put(String key, Entry entry) {
     }
 
