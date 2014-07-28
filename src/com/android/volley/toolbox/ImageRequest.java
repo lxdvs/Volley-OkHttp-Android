@@ -16,9 +16,12 @@
 
 package com.android.volley.toolbox;
 
+import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
@@ -31,7 +34,7 @@ import com.android.volley.VolleyLog;
  * A canned request for getting an image at a given URL and calling
  * back with a decoded Bitmap.
  */
-public class ImageRequest extends Request<Bitmap> {
+public class ImageRequest extends Request<CacheableBitmapDrawable> {
     /** Socket timeout in milliseconds for image requests */
     private static final int IMAGE_TIMEOUT_MS = 1000;
 
@@ -41,13 +44,17 @@ public class ImageRequest extends Request<Bitmap> {
     /** Default backoff multiplier for image requests */
     private static final float IMAGE_BACKOFF_MULT = 2f;
 
-    private final Response.Listener<Bitmap> mListener;
+    private final Response.Listener<CacheableBitmapDrawable> mListener;
     private final Config mDecodeConfig;
     private final int mMaxWidth;
     private final int mMaxHeight;
 
     /** Decoding lock so that we don't decode more than one image at a time (to avoid OOM's) */
     private static final Object sDecodeLock = new Object();
+
+    private Context mContext;
+
+    private ImageLoader.ImageCache mCache;
 
     /**
      * Creates a new image request, decoding to a maximum specified width and
@@ -66,7 +73,7 @@ public class ImageRequest extends Request<Bitmap> {
      * @param decodeConfig Format to decode the bitmap to
      * @param errorListener Error listener, or null to ignore errors
      */
-    public ImageRequest(String url, Response.Listener<Bitmap> listener, int maxWidth, int maxHeight,
+    public ImageRequest(Context context, String url, ImageLoader.ImageCache imageCache, Response.Listener<CacheableBitmapDrawable> listener, int maxWidth, int maxHeight,
             Config decodeConfig, Response.ErrorListener errorListener) {
         super(Method.GET, url, errorListener);
         setRetryPolicy(
@@ -75,6 +82,8 @@ public class ImageRequest extends Request<Bitmap> {
         mDecodeConfig = decodeConfig;
         mMaxWidth = maxWidth;
         mMaxHeight = maxHeight;
+        mContext = context;
+        mCache = imageCache;
     }
 
     @Override
@@ -119,7 +128,7 @@ public class ImageRequest extends Request<Bitmap> {
     }
 
     @Override
-    protected Response<Bitmap> parseNetworkResponse(NetworkResponse response) {
+    protected Response<CacheableBitmapDrawable> parseNetworkResponse(NetworkResponse response) {
         // Serialize all decode on a global lock to reduce concurrent heap usage.
         synchronized (sDecodeLock) {
             try {
@@ -139,7 +148,7 @@ public class ImageRequest extends Request<Bitmap> {
     /**
      * The real guts of parseNetworkResponse. Broken out for readability.
      */
-    private Response<Bitmap> doParse(NetworkResponse response) {
+    private Response<CacheableBitmapDrawable> doParse(NetworkResponse response) {
         response.isImage = true;
         byte[] data = response.data;
         BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
@@ -168,6 +177,11 @@ public class ImageRequest extends Request<Bitmap> {
             decodeOptions.inSampleSize = sampleSize;
             decodeOptions.inMutable = true;
 
+            Bitmap inBitmap = mCache.getOldestUnused(getCacheKey(), actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
+            if (inBitmap != null) {
+                decodeOptions.inBitmap = inBitmap;
+            }
+
             bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
 
 
@@ -176,18 +190,18 @@ public class ImageRequest extends Request<Bitmap> {
         if (bitmap == null) {
             return Response.error(new ParseError(response));
         } else {
-            return Response.success(bitmap, HttpHeaderParser.parseCacheHeaders(response));
+            return Response.success(new CacheableBitmapDrawable(mContext.getResources(), bitmap), HttpHeaderParser.parseCacheHeaders(response));
         }
     }
 
     @Override
-    protected void deliverResponse(Bitmap response) {
+    protected void deliverResponse(CacheableBitmapDrawable response) {
         mListener.onResponse(response);
     }
 
     /**
-     * Returns the largest power-of-two divisor for use in downscaling a bitmap
-     * that will not result in the scaling past the desired dimensions.
+     * Returns the largest power-of-two divisor for use in downscaling a bitmap.
+     * may result in image being smaller than desired dimensions
      *
      * @param actualWidth Actual width of the bitmap
      * @param actualHeight Actual height of the bitmap
@@ -201,7 +215,7 @@ public class ImageRequest extends Request<Bitmap> {
         double hr = (double) actualHeight / desiredHeight;
         double ratio = Math.min(wr, hr);
         float n = 1.0f;
-        while ((n * 2) <= ratio) {
+        while (n < ratio) {
             n *= 2;
         }
 

@@ -25,9 +25,11 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 
+import com.android.volley.Cache;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader.ImageContainer;
 import com.android.volley.toolbox.ImageLoader.ImageListener;
@@ -184,11 +186,11 @@ public class NetworkImageView extends ImageView {
                             return;
                         }
 
-                        if (response.getBitmap() != null) {
+                        if (response.getDrawable() != null) {
                             if (mFade && !isImmediate) {
                                 // first have a transition between the inital default drawable and the new one
                                 final Drawable initialDrawable = getDrawable() != null ? getDrawable() : new ColorDrawable(android.R.color.transparent);
-                                final BitmapDrawable bitmapDrawable = new BitmapDrawable(getContext().getResources(), response.getBitmap());
+                                final BitmapDrawable bitmapDrawable = response.getDrawable();
 
                                 TransitionDrawable td = new TransitionDrawable(new Drawable[] { initialDrawable, bitmapDrawable });
                                 setImageDrawable(td);
@@ -202,7 +204,7 @@ public class NetworkImageView extends ImageView {
                                     }
                                 }, FADE_MS);
                             } else {
-                                setImageBitmap(response.getBitmap());
+                                setImageDrawable(response.getDrawable());
                             }
 
                         } else if (mDefaultImageId != 0) {
@@ -235,6 +237,19 @@ public class NetworkImageView extends ImageView {
     }
 
     @Override
+    public void setImageDrawable(Drawable drawable) {
+        if (drawable instanceof CacheableBitmapDrawable) {
+            ((CacheableBitmapDrawable) drawable).incrementUseCount();
+        }
+
+        if (getDrawable() instanceof CacheableBitmapDrawable) {
+            ((CacheableBitmapDrawable) getDrawable()).decrementUseCount();
+        }
+
+        super.setImageDrawable(drawable);
+    }
+
+    @Override
     protected void onDetachedFromWindow() {
         if (mImageContainer != null) {
             // If the view was bound to an image request, cancel it and clear
@@ -250,6 +265,9 @@ public class NetworkImageView extends ImageView {
     @Override
     public void setImageResource(int resId) {
         super.setImageResource(resId);
+        if (getDrawable() instanceof CacheableBitmapDrawable) {
+            ((CacheableBitmapDrawable) getDrawable()).decrementUseCount();
+        }
         mDefaultImageId = resId;
     }
 
