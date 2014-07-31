@@ -524,7 +524,6 @@ public class ImageLoader {
      * @param maxHeight The max-height of the output.
      */
     private static String getCacheKey(String url, int maxWidth, int maxHeight) {
-        return new StringBuilder(url.length() + 12).append("#W").append(maxWidth)
-                .append("#H").append(maxHeight).append(url).toString();
+        return url;
     }
 }
