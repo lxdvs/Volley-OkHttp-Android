@@ -206,16 +206,23 @@ public class ImageLoader {
             ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null);
             imageListener.onResponse(container, true);
             return container;
+        } else {
+            CacheableBitmapDrawable zeroSizeCached = mCache.getDrawable(getCacheKey(requestUrl, 0, 0));
+            if (zeroSizeCached != null) {
+                ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null);
+                imageListener.onResponse(container, true);
+            } else if (doubleRespond) {
+                // Update the caller to let them know that they should use the default bitmap.
+                ImageContainer imageContainer =
+                        new ImageContainer(null, requestUrl, cacheKey, imageListener);
+                imageListener.onResponse(imageContainer, true);
+            }
         }
 
         // The bitmap did not exist in the cache, fetch it!
         ImageContainer imageContainer =
                 new ImageContainer(null, requestUrl, cacheKey, imageListener);
 
-        if (doubleRespond) {
-            // Update the caller to let them know that they should use the default bitmap.
-            imageListener.onResponse(imageContainer, true);
-        }
 
         // Check to see if a request is already in-flight.
         BatchedImageRequest request = mInFlightRequests.get(cacheKey);
@@ -523,7 +530,11 @@ public class ImageLoader {
      * @param maxWidth The max-width of the output.
      * @param maxHeight The max-height of the output.
      */
-    private static String getCacheKey(String url, int maxWidth, int maxHeight) {
+    public static String getCacheKey(String url, int maxWidth, int maxHeight) {
+        if (maxWidth == 0 || maxHeight == 0) {
+            return url;
+        }
+
         return new StringBuilder(url.length() + 12).append("#W").append(maxWidth)
                 .append("#H").append(maxHeight).append(url).toString();
     }
