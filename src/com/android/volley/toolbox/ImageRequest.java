@@ -164,18 +164,19 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
 
         int sampleSize = 1;
 
-        if (mMaxWidth > 0 || mMaxHeight > 0) {
+        if (mMaxWidth > 0 && mMaxHeight > 0) {
             // Then compute the dimensions we would ideally like to decode to.
             int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight,
                     actualWidth, actualHeight);
             int desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth,
                     actualHeight, actualWidth);
+
+            // Decode to the nearest power of two scaling factor.
             sampleSize = findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
         }
 
         decodeOptions.inSampleSize = sampleSize;
 
-        // Decode to the nearest power of two scaling factor.
         decodeOptions.inJustDecodeBounds = false;
         // TODO(ficus): Do we need this or is it okay since API 8 doesn't support it?
         // decodeOptions.inPreferQualityOverSpeed = PREFER_QUALITY_OVER_SPEED;
