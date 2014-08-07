@@ -152,17 +152,19 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         response.isImage = true;
         byte[] data = response.data;
         BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
-        Bitmap bitmap = null;
-        if (mMaxWidth == 0 && mMaxHeight == 0) {
-            decodeOptions.inPreferredConfig = mDecodeConfig;
-            bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
-        } else {
-            // If we have to resize this image, first get the natural bounds.
-            decodeOptions.inJustDecodeBounds = true;
-            BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
-            int actualWidth = decodeOptions.outWidth;
-            int actualHeight = decodeOptions.outHeight;
+        decodeOptions.inPreferredConfig = mDecodeConfig;
 
+        Bitmap bitmap;
+
+        // If we have to resize this image, first get the natural bounds.
+        decodeOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+        int actualWidth = decodeOptions.outWidth;
+        int actualHeight = decodeOptions.outHeight;
+
+        int sampleSize = 1;
+
+        if (mMaxWidth > 0 && mMaxHeight > 0) {
             // Then compute the dimensions we would ideally like to decode to.
             int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight,
                     actualWidth, actualHeight);
@@ -170,21 +172,26 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
                     actualHeight, actualWidth);
 
             // Decode to the nearest power of two scaling factor.
-            decodeOptions.inJustDecodeBounds = false;
-            // TODO(ficus): Do we need this or is it okay since API 8 doesn't support it?
-            // decodeOptions.inPreferQualityOverSpeed = PREFER_QUALITY_OVER_SPEED;
-            int sampleSize = findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-            decodeOptions.inSampleSize = sampleSize;
-            decodeOptions.inMutable = true;
+            sampleSize = findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
+        }
 
-            Bitmap inBitmap = mCache.getOldestUnused(getCacheKey(), actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
-            if (inBitmap != null) {
-                decodeOptions.inBitmap = inBitmap;
-            }
+        decodeOptions.inSampleSize = sampleSize;
 
+        decodeOptions.inJustDecodeBounds = false;
+        // TODO(ficus): Do we need this or is it okay since API 8 doesn't support it?
+        // decodeOptions.inPreferQualityOverSpeed = PREFER_QUALITY_OVER_SPEED;
+
+        decodeOptions.inMutable = true;
+        Bitmap inBitmap = mCache.getOldestUnused(getCacheKey(), actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
+        if (inBitmap != null) {
+            decodeOptions.inBitmap = inBitmap;
+        }
+
+        try {
             bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
-
-
+        } catch (IllegalArgumentException e) {
+            decodeOptions.inBitmap = null;
+            bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
         }
 
         if (bitmap == null) {
