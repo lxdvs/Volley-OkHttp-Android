@@ -206,17 +206,19 @@ public class ImageLoader {
             ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null);
             imageListener.onResponse(container, true);
             return container;
-        } else {
-            CacheableBitmapDrawable zeroSizeCached = mCache.getDrawable(getCacheKey(requestUrl, 0, 0));
-            if (zeroSizeCached != null) {
+        } else if (maxHeight > 0 && maxWidth > 0) {
+            cachedBitmap = mCache.getDrawable(getCacheKey(requestUrl, 0, 0));
+            if (cachedBitmap != null) {
                 ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null);
                 imageListener.onResponse(container, true);
-            } else if (doubleRespond) {
-                // Update the caller to let them know that they should use the default bitmap.
-                ImageContainer imageContainer =
-                        new ImageContainer(null, requestUrl, cacheKey, imageListener);
-                imageListener.onResponse(imageContainer, true);
             }
+        }
+
+        if (doubleRespond && cachedBitmap == null) {
+            // Update the caller to let them know that they should use the default bitmap.
+            ImageContainer imageContainer =
+                    new ImageContainer(null, requestUrl, cacheKey, imageListener);
+            imageListener.onResponse(imageContainer, true);
         }
 
         // The bitmap did not exist in the cache, fetch it!
