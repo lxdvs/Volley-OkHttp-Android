@@ -102,6 +102,7 @@ public class CacheDispatcher extends Thread {
                 // Attempt to retrieve this item from cache.
                 Cache.Entry entry = mCache.get(request.getCacheKey());
                 if (entry == null) {
+                    Log.w("offline", "Cache miss: " + request.getCacheKey());
                     request.addMarker("cache-miss");
                     // Cache miss; send off to the network dispatcher.
                     mNetworkQueue.put(request);
@@ -110,6 +111,7 @@ public class CacheDispatcher extends Thread {
 
                 // If it is completely expired, just send it to the network.
                 if (entry.isExpired()) {
+                    Log.w("offline", "Cache entry expired: " + request.getCacheKey());
                     request.addMarker("cache-hit-expired");
                     request.setCacheEntry(entry);
                     mNetworkQueue.put(request);
@@ -124,6 +126,7 @@ public class CacheDispatcher extends Thread {
 
                 if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
+                    Log.w("offline", "Cache hit return: " + request.getCacheKey());
                     mDelivery.postResponse(request, response);
                 } else {
                     // Soft-expired cache hit. We can deliver the cached response,

@@ -20,6 +20,7 @@ import android.annotation.TargetApi;
 import android.net.TrafficStats;
 import android.os.Build;
 import android.os.Process;
+import android.util.Log;
 
 import com.android.volley.Request.ReturnStrategy;
 
@@ -131,6 +132,7 @@ public class NetworkDispatcher extends Thread {
                 // TODO: Only update cache metadata instead of entire record for 304s.
                 if (request.shouldCache() && response.cacheEntry != null) {
                     mCache.put(request.getCacheKey(), response.cacheEntry);
+                    Log.w("offline", "Write to cache: " + request.getCacheKey());
                     request.addMarker("network-cache-written");
                 }
 

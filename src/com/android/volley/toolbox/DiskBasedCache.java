@@ -17,6 +17,7 @@
 package com.android.volley.toolbox;
 
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.android.volley.Cache;
 import com.android.volley.VolleyLog;
@@ -213,6 +214,7 @@ public class DiskBasedCache implements Cache {
             putEntry(key, e);
             return;
         } catch (IOException e) {
+            Log.w("offline", "Exception when writing to cache: " + key);
         }
         boolean deleted = file.delete();
         if (!deleted) {
