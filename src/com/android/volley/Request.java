@@ -58,7 +58,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         int TRACE = 6;
         int PATCH = 7;
     }
-    
+
     /**
      * Supported request methods.
      */
@@ -77,7 +77,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * TRACE, and PATCH.
      */
     private final int mMethod;
-    
+
     protected ReturnStrategy mReturnStrategy = ReturnStrategy.DOUBLE;
 
     /** URL of this request. */
@@ -618,11 +618,13 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         return (mCanceled ? "[X] " : "[ ] ") + getUrl() + " " + trafficStatsTag + " "
                 + getPriority() + " " + mSequence;
     }
-    
+
     public ReturnStrategy getReturnStrategy() {
         return mReturnStrategy;
     }
-    public void setReturnStrategy(ReturnStrategy strategy) {
+
+    public Request<?> setReturnStrategy(ReturnStrategy strategy) {
         mReturnStrategy = strategy;
+        return this;
     }
 }
