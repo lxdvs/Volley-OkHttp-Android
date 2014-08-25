@@ -40,7 +40,7 @@ public class CacheDispatcher extends Thread {
     private final BlockingQueue<Request<?>> mCacheQueue;
 
     /** The queue of requests going out to the network. */
-    private final BlockingQueue<Request<?>> mNetworkQueue;
+    private final RequestQueue mNetworkQueue;
 
     /** The cache to read from. */
     private final Cache mCache;
@@ -61,7 +61,7 @@ public class CacheDispatcher extends Thread {
      * @param delivery Delivery interface to use for posting responses
      */
     public CacheDispatcher(
-            BlockingQueue<Request<?>> cacheQueue, BlockingQueue<Request<?>> networkQueue,
+            BlockingQueue<Request<?>> cacheQueue, RequestQueue networkQueue,
             Cache cache, ResponseDelivery delivery) {
         mCacheQueue = cacheQueue;
         mNetworkQueue = networkQueue;
@@ -104,7 +104,7 @@ public class CacheDispatcher extends Thread {
                 if (entry == null) {
                     request.addMarker("cache-miss");
                     // Cache miss; send off to the network dispatcher.
-                    mNetworkQueue.put(request);
+                    mNetworkQueue.networkProcessRequest(request);
                     continue;
                 }
 
@@ -112,7 +112,7 @@ public class CacheDispatcher extends Thread {
                 if (entry.isExpired()) {
                     request.addMarker("cache-hit-expired");
                     request.setCacheEntry(entry);
-                    mNetworkQueue.put(request);
+                    mNetworkQueue.networkProcessRequest(request);
                     continue;
                 }
 
@@ -135,7 +135,7 @@ public class CacheDispatcher extends Thread {
                     if (request.getReturnStrategy() == ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
                         request.mCacheResponse = response;
                         request.addMarker("cache-error-delivery-response-set");
-                        mNetworkQueue.put(request);
+                        mNetworkQueue.networkProcessRequest(request);
                     } else {
                         
                         // Mark the response as intermediate.
@@ -146,12 +146,7 @@ public class CacheDispatcher extends Thread {
                         mDelivery.postResponse(request, response, new Runnable() {
                             @Override
                             public void run() {
-                                try {
-                                    
-                                    mNetworkQueue.put(request);
-                                } catch (InterruptedException e) {
-                                    // Not much we can do about this.
-                                }
+                                mNetworkQueue.networkProcessRequest(request);
                             }
                         });
                     }

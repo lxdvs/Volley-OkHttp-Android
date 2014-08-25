@@ -29,8 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.util.Pair;
 
+import com.android.volley.Request.Priority;
 import com.android.volley.Request.ReturnStrategy;
 
 /**
@@ -73,8 +75,12 @@ public class RequestQueue {
     private final PriorityBlockingQueue<Request<?>> mNetworkQueue =
         new PriorityBlockingQueue<Request<?>>();
 
+    /** This queue should be filled with at most 1 requests for priority processing. */
+    private final PriorityBlockingQueue<Request<?>> mPriorityQueue =
+            new PriorityBlockingQueue<Request<?>>();
+
     /** Number of network request dispatcher threads to start. */
-    private static final int DEFAULT_NETWORK_THREAD_POOL_SIZE = 4;
+    private static final int DEFAULT_NETWORK_THREAD_POOL_SIZE = 3;
 
     /** Cache interface for retrieving and storing responses. */
     private final Cache mCache;
@@ -87,6 +93,9 @@ public class RequestQueue {
 
     /** The network dispatchers. */
     private NetworkDispatcher[] mDispatchers;
+
+    /** The priority dispatcher. */
+    private NetworkDispatcher mPriorityDispatcher;
 
     /** The cache dispatcher. */
     private CacheDispatcher mCacheDispatcher;
@@ -138,7 +147,7 @@ public class RequestQueue {
     public void start() {
         stop(); // Make sure any currently running dispatchers are stopped.
         // Create the cache dispatcher and start it.
-        mCacheDispatcher = new CacheDispatcher(mCacheQueue, mNetworkQueue, mCache, mDelivery);
+        mCacheDispatcher = new CacheDispatcher(mCacheQueue, this, mCache, mDelivery);
         mCacheDispatcher.start();
 
         // Create network dispatchers (and corresponding threads) up to the pool size.
@@ -148,6 +157,9 @@ public class RequestQueue {
             mDispatchers[i] = networkDispatcher;
             networkDispatcher.start();
         }
+
+        mPriorityDispatcher = new NetworkDispatcher(mPriorityQueue, mNetwork, mCache, mDelivery);
+        mPriorityDispatcher.start();
     }
 
     /**
@@ -325,6 +337,41 @@ public class RequestQueue {
     
     public boolean willMissCache(Request request) {
         return mCacheDispatcher.willMissCache(request);
+    }
+
+    /**
+     * @param request a request to process on the network
+     * @return true if this request was processed on the dedicated high-priority dispatcher
+     */
+    public boolean networkProcessRequest(Request request) {
+        boolean normalDispatchersFilled = true;
+
+        // iterate through dispatchers to see if one is free
+        for (NetworkDispatcher dispatcher: mDispatchers) {
+            if (!dispatcher.isProcessing()) {
+                normalDispatchersFilled = false;
+                break;
+            }
+        }
+
+        if (normalDispatchersFilled
+                && request.getPriority().compareTo(Priority.NORMAL) >= 0
+                && !mPriorityDispatcher.isProcessing()
+                && mPriorityQueue.size() == 0) {
+            // If all normal dispatchers are filled,
+            // and the request is relatively high-priority,
+            // and if the high-priority dispatcher is free,
+            // do a high-priority dispatch.
+            mPriorityQueue.put(request);
+            // Log.i("RPRI", String.format("Priority Execution(%s) of %s: %s items in normal queue", request.getPriority().toString(), request.getClass().getSimpleName(), mNetworkQueue.size()+""));
+            return true;
+        } else {
+            // Else, just add to normal priority queue as that will (probably) be the next
+            // available or most appropriate process slot
+            // Log.i("RPRI", String.format("Normal Execution(%s) of %s: %s items in normal queue", request.getPriority().toString(), request.getClass().getSimpleName(), mNetworkQueue.size()+""));
+            mNetworkQueue.put(request);
+            return false;
+        }
     }
     
 }

@@ -282,7 +282,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * @return This Request object to allow for chaining.
      */
     public final Request<?> setSequence(int sequence) {
-        mSequence = sequence;
+        mSequence = isFifoProcessed() ? sequence : Integer.MAX_VALUE - sequence;
         return this;
     }
 
@@ -626,5 +626,16 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public Request<?> setReturnStrategy(ReturnStrategy strategy) {
         mReturnStrategy = strategy;
         return this;
+    }
+
+    /**
+     * @return true if requests of this priority should be FIFO processed,
+     * false if LIFO processed.
+     *
+     * NOTE implementation-wise, all requests in line for LIFO processing have implied priority
+     * over FIFO requests. FIFO is useful for image requests.
+     */
+    protected boolean isFifoProcessed() {
+        return true;
     }
 }
