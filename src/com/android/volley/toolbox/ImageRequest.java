@@ -228,4 +228,9 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
 
         return (int) n;
     }
+
+    @Override
+    protected boolean isFifoProcessed() {
+        return false;
+    }
 }
