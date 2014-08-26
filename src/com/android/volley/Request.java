@@ -632,8 +632,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * @return true if requests of this priority should be FIFO processed,
      * false if LIFO processed.
      *
-     * NOTE implementation-wise, all requests in line for LIFO processing have implied priority
-     * over FIFO requests. FIFO is useful for image requests.
+     * NOTE implementation-wise, all requests in line for FIFO processing have implied priority
+     * over LIFO requests. LIFO is useful for image requests.
      */
     protected boolean isFifoProcessed() {
         return true;
