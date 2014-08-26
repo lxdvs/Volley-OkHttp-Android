@@ -44,6 +44,8 @@ public class NetworkDispatcher extends Thread {
     private final ResponseDelivery mDelivery;
     /** Used for telling us to die. */
     private volatile boolean mQuit = false;
+    /** Hint for if this dispatcher is processing a request. */
+    private volatile boolean mProcessing = false;
 
     /**
      * Creates a new network dispatcher thread.  You must call {@link #start()}
@@ -87,7 +89,9 @@ public class NetworkDispatcher extends Thread {
         while (true) {
             try {
                 // Take a request from the queue.
+                mProcessing = false;
                 request = mQueue.take();
+                mProcessing = true;
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
                 if (mQuit) {
@@ -158,5 +162,9 @@ public class NetworkDispatcher extends Thread {
     private void parseAndDeliverNetworkError(Request<?> request, VolleyError error) {
         error = request.parseNetworkError(error);
         mDelivery.postError(request, error);
+    }
+
+    public boolean isProcessing() {
+        return mProcessing;
     }
 }
