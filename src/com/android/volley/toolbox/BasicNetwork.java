@@ -16,7 +16,6 @@
 
 package com.android.volley.toolbox;
 
-import android.os.Debug;
 import android.os.SystemClock;
 
 import com.android.volley.AuthFailureError;
