@@ -16,6 +16,23 @@
 
 package com.android.volley.toolbox;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Request.Method;
+import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
+import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.http.ReflectMethod;
+
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.message.BasicStatusLine;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,23 +45,6 @@ import java.util.Map.Entry;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
-
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicHttpResponse;
-import org.apache.http.message.BasicStatusLine;
-
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.Request.Method;
-import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
-import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
-import com.squareup.okhttp.internal.http.ReflectMethod;
 
 /**
  * An {@link HttpStack} based on {@link HttpURLConnection}.
@@ -259,14 +259,15 @@ public class HurlStack implements HttpStack {
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
             out.write(body);
             out.close();
-        } else {
+        } else if (request.getEntity() != null) {
             HttpEntity entity = request.getEntity();
-            if (entity != null) {
-                connection.setDoOutput(true);
-                connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
-                entity.writeTo(connection.getOutputStream());
-            }
-
+            connection.setDoOutput(true);
+            connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
+            entity.writeTo(connection.getOutputStream());
+        } else {
+            connection.setDoOutput(true);
+            connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
+            request.writeTo(connection.getOutputStream());
         }
     }
 }

@@ -27,6 +27,7 @@ import com.android.volley.VolleyLog.MarkerLog;
 
 import org.apache.http.HttpEntity;
 
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Collections;
@@ -462,6 +463,14 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     public HttpEntity getEntity() {
         return null;
+    }
+
+    /**
+     * Allows the request to write its post body directly to the output stream for perf and memory reasons
+     * @param outputStream output stream connected to network
+     */
+    public void writeTo(OutputStream outputStream) {
+
     }
 
     /**
