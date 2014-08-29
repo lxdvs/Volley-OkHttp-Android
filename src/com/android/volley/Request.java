@@ -465,6 +465,10 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         return null;
     }
 
+    /**
+     * Allows the request to write its post body directly to the output stream for perf and memory reasons
+     * @param outputStream output stream connected to network
+     */
     public void writeTo(OutputStream outputStream) {
 
     }
