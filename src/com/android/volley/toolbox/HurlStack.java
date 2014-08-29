@@ -19,9 +19,6 @@ package com.android.volley.toolbox;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Request.Method;
-import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
-import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
-import com.squareup.okhttp.internal.http.ReflectMethod;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -45,7 +42,6 @@ import java.util.Map.Entry;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
-
 /**
  * An {@link HttpStack} based on {@link HttpURLConnection}.
  */
@@ -103,12 +99,16 @@ public class HurlStack implements HttpStack {
         }
         URL parsedUrl = new URL(url);
         HttpURLConnection connection = openConnection(parsedUrl, request);
-        
+
+        /*
+        not sure if this is needed with the okhttp-urlconnection wrapper
+        also these methods no longer exist
         if (connection instanceof HttpURLConnectionImpl) {
             ((HttpURLConnectionImpl) connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
         } else if (connection instanceof HttpsURLConnectionImpl) {
             ((HttpsURLConnectionImpl) connection).setAllowFailedPostRetry(request.getMethod() != Method.POST);
         }
+        */
 
         for (String headerName : map.keySet()) {
             connection.addRequestProperty(headerName, map.get(headerName));
@@ -233,16 +233,8 @@ public class HurlStack implements HttpStack {
                 connection.setRequestMethod("TRACE");
                 break;
             case Method.PATCH:
-                //Workaround for HttpUrlConnection not supporting PATCH request method (Ref: https://github.com/square/retrofit/issues/282)
-                if (connection instanceof ReflectMethod) {
-                    try {
-                        ((ReflectMethod) connection).setMethodReflect("PATCH");
-                    } catch (SecurityException e) {
-                        throw new IllegalStateException("Unsupported PATCH type", e);
-                    } catch (NoSuchFieldException e) {
-                        throw new IllegalStateException("Unsupported PATCH type", e);
-                    }
-                }
+                // patches are really post with a header set for us
+                connection.setRequestMethod("POST");
                 addBodyIfExists(connection, request);
                 break;
             default:
