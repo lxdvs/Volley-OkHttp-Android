@@ -16,17 +16,12 @@
 
 package com.android.volley.toolbox;
 
-import java.io.File;
-import java.net.URL;
-import java.security.GeneralSecurityException;
-
-import javax.net.ssl.SSLContext;
-
 import android.content.Context;
 
 import com.android.volley.Network;
 import com.android.volley.RequestQueue;
-import com.squareup.okhttp.OkHttpClient;
+
+import java.io.File;
 
 public class Volley {
 
@@ -43,6 +38,7 @@ public class Volley {
     public static RequestQueue newRequestQueue(Context context, HttpStack stack) {
         File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
 
+        /*
         if (stack == null) {
             stack = new OkHttpStack();
             OkHttpClient client = ((OkHttpStack)stack).getClient();
@@ -57,6 +53,7 @@ public class Volley {
             client.setSslSocketFactory(sslContext.getSocketFactory());
             URL.setURLStreamHandlerFactory(client);
         }
+        */
 
         Network network = new BasicNetwork(stack);
 
