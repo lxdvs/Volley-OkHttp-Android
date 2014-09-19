@@ -16,20 +16,15 @@
 package com.android.volley.toolbox;
 
 import android.content.Context;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.text.TextUtils;
-import android.util.AttributeSet;
-import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 
-import com.android.volley.Cache;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader.ImageContainer;
 import com.android.volley.toolbox.ImageLoader.ImageListener;
@@ -176,6 +171,7 @@ public class NetworkImageView extends ImageView {
                         // pass do not set the image immediately as it will trigger a requestLayout
                         // inside of a layout. Instead, defer setting the image by posting back to
                         // the main thread.
+
                         if (isImmediate && isInLayoutPass) {
                             post(new Runnable() {
                                 @Override
@@ -187,10 +183,10 @@ public class NetworkImageView extends ImageView {
                         }
 
                         if (response.getDrawable() != null) {
+                            final CacheableBitmapDrawable bitmapDrawable = response.getDrawable();
                             if (mFade && !isImmediate) {
                                 // first have a transition between the inital default drawable and the new one
                                 final Drawable initialDrawable = getDrawable() != null ? getDrawable() : new ColorDrawable(android.R.color.transparent);
-                                final BitmapDrawable bitmapDrawable = response.getDrawable();
 
                                 TransitionDrawable td = new TransitionDrawable(new Drawable[] { initialDrawable, bitmapDrawable });
                                 setImageDrawable(td);
@@ -201,10 +197,12 @@ public class NetworkImageView extends ImageView {
                                     @Override
                                     public void run() {
                                         setImageDrawable(bitmapDrawable);
+                                        bitmapDrawable.markForceUsing(false);
                                     }
                                 }, FADE_MS);
                             } else {
                                 setImageDrawable(response.getDrawable());
+                                bitmapDrawable.markForceUsing(false);
                             }
 
                         } else if (mDefaultImageId != 0) {

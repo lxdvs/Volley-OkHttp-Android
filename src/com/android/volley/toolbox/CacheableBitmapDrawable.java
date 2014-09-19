@@ -8,10 +8,13 @@ import android.util.Log;
 public class CacheableBitmapDrawable extends BitmapDrawable {
 
     private int mUseCount;
+    private boolean mForceUsing;
+    private boolean mDead;
 
     public CacheableBitmapDrawable(Resources resources, Bitmap bitmap) {
         super(resources, bitmap);
-        mUseCount = -1;
+        // starts used=true prevents it from being instantly reclaimed
+        mForceUsing = true;
     }
 
     public void incrementUseCount() {
@@ -21,6 +24,10 @@ public class CacheableBitmapDrawable extends BitmapDrawable {
             }
 
             mUseCount++;
+
+            if (mDead) {
+                Log.e(CacheableBitmapDrawable.class.getSimpleName(), "Reusing an image that has already been inBitmapped. This is very bad. Tell Nick about this.");
+            }
         }
     }
 
@@ -35,9 +42,26 @@ public class CacheableBitmapDrawable extends BitmapDrawable {
         }
     }
 
+    /**
+     * mark used when pulled from cached so its marked as used even before it actually gets displayed
+     */
+    public void markForceUsing(boolean using) {
+        synchronized (this) {
+            mForceUsing = using;
+        }
+    }
+
     public boolean isUnused() {
         synchronized (this) {
-            return mUseCount == 0;
+            return mUseCount == 0 && !mForceUsing;
         }
+    }
+
+    public void markDead() {
+        mDead = true;
+    }
+
+    public boolean isDead() {
+        return mDead;
     }
 }
