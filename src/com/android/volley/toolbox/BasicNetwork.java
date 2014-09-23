@@ -113,6 +113,7 @@ public class BasicNetwork implements Network {
 
                 // if the request is slow, log it.
                 long requestLifetime = SystemClock.elapsedRealtime() - requestStart;
+                request.setRequestTime(requestLifetime);
                 logSlowRequests(requestLifetime, request, responseContents, statusLine);
 
                 if (statusCode < 200 || statusCode > 299) {
