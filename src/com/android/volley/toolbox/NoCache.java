@@ -18,12 +18,23 @@ package com.android.volley.toolbox;
 
 import com.android.volley.Cache;
 
+import java.io.FileOutputStream;
+
 /**
  * A cache that doesn't.
  */
 public class NoCache implements Cache {
     @Override
     public void clear() {
+    }
+
+    @Override
+    public FileOutputStream prepareEntry(String cacheKey, Entry cacheEntry, int available) {
+        return null;
+    }
+
+    @Override
+    public void putEntry(String cacheKey, Entry cacheEntry) {
     }
 
     @Override

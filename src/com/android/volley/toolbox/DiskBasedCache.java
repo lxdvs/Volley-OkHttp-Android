@@ -24,6 +24,7 @@ import com.android.volley.VolleyLog;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -120,24 +121,16 @@ public class DiskBasedCache implements Cache {
         }
 
         File file = getFileForKey(key);
-        CountingInputStream cis = null;
+        CountingInputStream cis;
         try {
             cis = new CountingInputStream(new FileInputStream(file));
             CacheHeader.readHeader(cis); // eat header
-            byte[] data = streamToBytes(cis, (int) (file.length() - cis.bytesRead));
-            return entry.toCacheEntry(data);
+            //byte[] data = streamToBytes(cis, (int) (file.length() - cis.bytesRead));
+            return entry.toCacheEntry(cis);
         } catch (IOException e) {
             VolleyLog.d("%s: %s", file.getAbsolutePath(), e.toString());
             remove(key);
             return null;
-        } finally {
-            if (cis != null) {
-                try {
-                    cis.close();
-                } catch (IOException ioe) {
-                    return null;
-                }
-            }
         }
     }
 
@@ -195,6 +188,25 @@ public class DiskBasedCache implements Cache {
             put(key, entry);
         }
 
+    }
+
+    public synchronized FileOutputStream prepareEntry(String key, Entry entry, int available) {
+        pruneIfNeeded(available, true);
+        File file = getFileForKey(key);
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            CacheHeader e = new CacheHeader(key, entry);
+            e.writeHeader(fos);
+            return fos;
+        } catch (FileNotFoundException e) {
+        }
+
+        return null;
+    }
+
+    public synchronized void putEntry(String key, Entry entry) {
+        CacheHeader e = new CacheHeader(key, entry);
+        putEntry(key, e);
     }
 
     /**
@@ -419,9 +431,10 @@ public class DiskBasedCache implements Cache {
         /**
          * Creates a cache entry for the specified data.
          */
-        public Entry toCacheEntry(byte[] data) {
+        public Entry toCacheEntry(InputStream stream) {
             Entry e = new Entry();
-            e.data = data;
+            e.data = new byte[0];
+            e.stream = stream;
             e.etag = etag;
             e.serverDate = serverDate;
             e.ttl = ttl;

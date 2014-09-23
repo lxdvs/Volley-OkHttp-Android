@@ -16,11 +16,12 @@
 
 package com.android.volley;
 
-import java.util.concurrent.BlockingQueue;
-
 import android.os.Process;
 
 import com.android.volley.Request.ReturnStrategy;
+
+import java.io.IOException;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Provides a thread for performing cache triage on a queue of requests.
@@ -118,8 +119,10 @@ public class CacheDispatcher extends Thread {
                 // We have a cache hit; parse its data for delivery back to the request.
                 request.addMarker("cache-hit");
                 Response<?> response = request.parseNetworkResponse(
-                        new NetworkResponse(entry.data, entry.responseHeaders));
+                        new NetworkResponse(entry.stream, entry.responseHeaders));
                 request.addMarker("cache-hit-parsed");
+
+                entry.stream.close();
 
                 if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
@@ -157,6 +160,7 @@ public class CacheDispatcher extends Thread {
                     return;
                 }
                 continue;
+            } catch (IOException e) {
             }
         }
     }
