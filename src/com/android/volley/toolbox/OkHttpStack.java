@@ -2,10 +2,12 @@ package com.android.volley.toolbox;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
+import com.squareup.okhttp.Protocol;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 /**
  * An {@link com.android.volley.toolbox.HttpStack HttpStack} implementation which uses OkHttp as its transport.
@@ -22,6 +24,12 @@ public class OkHttpStack extends HurlStack {
             throw new NullPointerException("Client must not be null.");
         }
         this.client = client;
+
+        // force http
+        // no spdy https://github.com/square/okhttp/issues/963
+        ArrayList<Protocol> list = new ArrayList< Protocol >();
+        list.add(Protocol.HTTP_1_1);
+        client.setProtocols(list);
     }
 
     public OkHttpClient getClient() {
