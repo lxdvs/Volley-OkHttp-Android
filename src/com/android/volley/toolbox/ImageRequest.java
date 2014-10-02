@@ -17,11 +17,9 @@
 package com.android.volley.toolbox;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
@@ -29,6 +27,10 @@ import com.android.volley.ParseError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyLog;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * A canned request for getting an image at a given URL and calling
@@ -149,8 +151,10 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
      * The real guts of parseNetworkResponse. Broken out for readability.
      */
     private Response<CacheableBitmapDrawable> doParse(NetworkResponse response) {
+        setCacheEntry(HttpHeaderParser.parseCacheHeaders(response));
+
         response.isImage = true;
-        byte[] data = response.data;
+        byte[] data = parseStream(response.inputStream);
         BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
         decodeOptions.inPreferredConfig = mDecodeConfig;
 
@@ -197,8 +201,26 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         if (bitmap == null) {
             return Response.error(new ParseError(response));
         } else {
-            return Response.success(new CacheableBitmapDrawable(mContext.getResources(), bitmap), HttpHeaderParser.parseCacheHeaders(response));
+            return Response.success(new CacheableBitmapDrawable(mContext.getResources(), bitmap), getCacheEntry());
         }
+    }
+
+    private byte[] parseStream(InputStream inputStream) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        int nRead;
+        byte[] data = new byte[1024];
+
+        try {
+            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+
+            buffer.flush();
+        } catch (IOException e) {
+        }
+
+        return buffer.toByteArray();
     }
 
     @Override

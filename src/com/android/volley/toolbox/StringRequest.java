@@ -62,12 +62,7 @@ public class StringRequest extends Request<String> {
 
     @Override
     protected Response<String> parseNetworkResponse(NetworkResponse response) {
-        String parsed;
-        try {
-            parsed = new String(response.data, HttpHeaderParser.parseCharset(response.headers));
-        } catch (UnsupportedEncodingException e) {
-            parsed = new String(response.data);
-        }
+        String parsed = response.getDataAsString();
         return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response));
     }
 }

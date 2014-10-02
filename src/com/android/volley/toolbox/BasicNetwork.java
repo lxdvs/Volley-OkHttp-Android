@@ -39,6 +39,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.impl.cookie.DateUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -84,7 +85,7 @@ public class BasicNetwork implements Network {
         long requestStart = SystemClock.elapsedRealtime();
         while (true) {
             HttpResponse httpResponse = null;
-            byte[] responseContents = null;
+            InputStream responseStream = null;
             Map<String, String> responseHeaders = new HashMap<String, String>();
             try {
                 // Gather headers.
@@ -98,27 +99,27 @@ public class BasicNetwork implements Network {
                 // Handle cache validation.
                 if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
                     return new NetworkResponse(HttpStatus.SC_NOT_MODIFIED,
-                            request.getCacheEntry() == null ? null : request.getCacheEntry().data,
+                            request.getCacheEntry() == null ? new ByteArrayInputStream(new byte[0]) : request.getCacheEntry().stream,
                             responseHeaders, true);
                 }
 
                 // Some responses such as 204s do not have content.  We must check.
                 if (httpResponse.getEntity() != null) {
-                  responseContents = entityToBytes(httpResponse.getEntity());
+                    responseStream = httpResponse.getEntity().getContent();
                 } else {
                   // Add 0 byte response as a way of honestly representing a
                   // no-content request.
-                  responseContents = new byte[0];
+                  responseStream = new ByteArrayInputStream(new byte[0]);
                 }
 
                 // if the request is slow, log it.
                 long requestLifetime = SystemClock.elapsedRealtime() - requestStart;
-                logSlowRequests(requestLifetime, request, responseContents, statusLine);
+                logSlowRequests(requestLifetime, request, httpResponse.getEntity().getContentLength(), statusLine);
 
                 if (statusCode < 200 || statusCode > 299) {
                     throw new IOException();
                 }
-                return new NetworkResponse(statusCode, responseContents, responseHeaders, false);
+                return new NetworkResponse(statusCode, responseStream, responseHeaders, false);
             } catch (SocketTimeoutException e) {
                 attemptRetryOnException("socket", request, new TimeoutError());
             } catch (ConnectTimeoutException e) {
@@ -134,8 +135,8 @@ public class BasicNetwork implements Network {
                     throw new NoConnectionError(e);
                 }
                 VolleyLog.e("Unexpected response code %d for %s", statusCode, request.getUrl());
-                if (responseContents != null) {
-                    networkResponse = new NetworkResponse(statusCode, responseContents,
+                if (responseStream != null) {
+                    networkResponse = new NetworkResponse(statusCode, responseStream,
                             responseHeaders, false);
                     if (statusCode == HttpStatus.SC_UNAUTHORIZED ||
                             statusCode == HttpStatus.SC_FORBIDDEN) {
@@ -156,11 +157,11 @@ public class BasicNetwork implements Network {
      * Logs requests that took over SLOW_REQUEST_THRESHOLD_MS to complete.
      */
     private void logSlowRequests(long requestLifetime, Request<?> request,
-            byte[] responseContents, StatusLine statusLine) {
+            long length, StatusLine statusLine) {
         if (DEBUG || requestLifetime > SLOW_REQUEST_THRESHOLD_MS) {
             VolleyLog.d("HTTP response for request=<%s> [lifetime=%d], [size=%s], " +
                     "[rc=%d], [retryCount=%s]", request, requestLifetime,
-                    responseContents != null ? responseContents.length : "null",
+                    length >= 0 ? length : "null",
                     statusLine.getStatusCode(), request.getRetryPolicy().getCurrentRetryCount());
         }
     }

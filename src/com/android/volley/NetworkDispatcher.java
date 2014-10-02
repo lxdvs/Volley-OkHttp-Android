@@ -22,6 +22,7 @@ import android.os.Build;
 import android.os.Process;
 
 import com.android.volley.Request.ReturnStrategy;
+import com.android.volley.toolbox.CacheableInputStream;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -128,13 +129,16 @@ public class NetworkDispatcher extends Thread {
                 }
 
                 // Parse the response here on the worker thread.
+                networkResponse.inputStream = new CacheableInputStream(request, networkResponse, mCache);
+
                 Response<?> response = request.parseNetworkResponse(networkResponse);
                 request.addMarker("network-parse-complete");
+                networkResponse.inputStream.close();
 
                 // Write to cache if applicable.
                 // TODO: Only update cache metadata instead of entire record for 304s.
                 if (request.shouldCache() && response.cacheEntry != null) {
-                    mCache.put(request.getCacheKey(), response.cacheEntry);
+                    //mCache.put(request.getCacheKey(), response.cacheEntry);
                     request.addMarker("network-cache-written");
                 }
 

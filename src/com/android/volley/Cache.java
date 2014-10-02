@@ -16,6 +16,8 @@
 
 package com.android.volley;
 
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
 
@@ -69,12 +71,17 @@ public interface Cache {
      */
     public void clear();
 
+    public FileOutputStream prepareEntry(String cacheKey, Entry cacheEntry, int available);
+
+    public void putEntry(String cacheKey, Entry cacheEntry);
+
     /**
      * Data and metadata for an entry returned by the cache.
      */
     public static class Entry {
         /** The data returned from cache. */
         public byte[] data;
+        public InputStream stream;
 
         /** Is cache item an image */
         public boolean isImage;
