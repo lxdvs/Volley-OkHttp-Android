@@ -33,6 +33,7 @@ import org.apache.http.message.BasicStatusLine;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -255,11 +256,15 @@ public class HurlStack implements HttpStack {
             HttpEntity entity = request.getEntity();
             connection.setDoOutput(true);
             connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
-            entity.writeTo(connection.getOutputStream());
+            OutputStream out = connection.getOutputStream();
+            entity.writeTo(out);
+            out.close();
         } else {
             connection.setDoOutput(true);
             connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
-            request.writeTo(connection.getOutputStream());
+            OutputStream out = connection.getOutputStream();
+            request.writeTo(out);
+            out.close();
         }
     }
 }
