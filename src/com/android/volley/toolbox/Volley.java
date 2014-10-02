@@ -20,7 +20,6 @@ import android.content.Context;
 
 import com.android.volley.Network;
 import com.android.volley.RequestQueue;
-import com.squareup.okhttp.OkHttpClient;
 
 import java.io.File;
 

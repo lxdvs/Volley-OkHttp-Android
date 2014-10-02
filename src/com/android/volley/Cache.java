@@ -42,8 +42,9 @@ public interface Cache {
      * Adds or replaces an entry to the cache.
      * @param key Cache key
      * @param entry Data to store and metadata for cache coherency, TTL, etc.
+     * @param cacheInstantly should the cache write instantly or allow delay
      */
-    public void put(String key, Entry entry);
+    public void put(String key, Entry entry, boolean cacheInstantly);
 
     /**
      * Performs any potentially long-running actions needed to initialize the cache;

@@ -16,6 +16,9 @@
 
 package com.android.volley.toolbox;
 
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Process;
 import android.os.SystemClock;
 
 import com.android.volley.Cache;
@@ -34,6 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Cache implementation that caches files directly onto the hard disk in the specified
@@ -41,9 +45,12 @@ import java.util.Map;
  */
 public class DiskBasedCache implements Cache {
 
+    private static final long DELAY_CACHE_WRITE = 5000;
+
     /** Map of the Key, CacheHeader pairs */
     private final Map<String, CacheHeader> mEntries =
             new LinkedHashMap<String, CacheHeader>(16, .75f, true);
+    private final CacheWriteHandlerThread mCacheWriteHanderThread;
 
     /** Total amount of space currently used by the cache in bytes. */
     private long mTotalSize = 0;
@@ -63,6 +70,8 @@ public class DiskBasedCache implements Cache {
     /** Magic number for current version of cache file format. */
     private static final int CACHE_MAGIC = 0x20120504;
 
+    private ConcurrentHashMap<String, Entry> mMemoryMap = new ConcurrentHashMap<String, Entry>(16, 0.75f);
+
     /**
      * Constructs an instance of the DiskBasedCache at the specified directory.
      * @param rootDirectory The root directory of the cache.
@@ -71,6 +80,7 @@ public class DiskBasedCache implements Cache {
     public DiskBasedCache(File rootDirectory, long maxCacheSizeInBytes) {
         mRootDirectory = rootDirectory;
         mMaxCacheSizeInBytes = maxCacheSizeInBytes;
+        mCacheWriteHanderThread = new CacheWriteHandlerThread();
     }
 
     /**
@@ -94,8 +104,11 @@ public class DiskBasedCache implements Cache {
             }
         }
         mEntries.clear();
+        mMemoryMap.clear();
         mTotalSize = 0;
         VolleyLog.d("Cache cleared.");
+
+        mCacheWriteHanderThread.clear();
     }
 
     @Override
@@ -113,6 +126,11 @@ public class DiskBasedCache implements Cache {
      */
     @Override
     public synchronized Entry get(String key) {
+        Entry memoryEntry = mMemoryMap.get(key);
+        if (memoryEntry != null) {
+            return memoryEntry;
+        }
+
         CacheHeader entry = mEntries.get(key);
         // if the entry does not exist, return.
         if (entry == null) {
@@ -167,7 +185,7 @@ public class DiskBasedCache implements Cache {
                 putEntry(entry.key, entry);
             } catch (IOException e) {
                 if (file != null) {
-                   file.delete();
+                    file.delete();
                 }
             } finally {
                 try {
@@ -192,7 +210,7 @@ public class DiskBasedCache implements Cache {
             if (fullExpire) {
                 entry.ttl = 0;
             }
-            put(key, entry);
+            put(key, entry, true);
         }
 
     }
@@ -201,7 +219,14 @@ public class DiskBasedCache implements Cache {
      * Puts the entry with the specified key into the cache.
      */
     @Override
-    public synchronized void put(String key, Entry entry) {
+    public synchronized void put(String key, Entry entry, boolean cacheInstantly) {
+        if (!cacheInstantly) {
+            mMemoryMap.put(key, entry);
+            mCacheWriteHanderThread.insertIntoCacheDelayed(key);
+            return;
+        }
+
+
         pruneIfNeeded(entry.data.length, true);
         File file = getFileForKey(key);
         try {
@@ -218,6 +243,8 @@ public class DiskBasedCache implements Cache {
         if (!deleted) {
             VolleyLog.d("Could not clean up file %s", file.getAbsolutePath());
         }
+
+        mMemoryMap.remove(key);
     }
 
     /**
@@ -279,8 +306,8 @@ public class DiskBasedCache implements Cache {
             if (deleted) {
                 mTotalSize -= e.size;
             } else {
-               VolleyLog.d("Could not delete cache entry for key=%s, filename=%s",
-                       e.key, getFilenameForKey(e.key));
+                VolleyLog.d("Could not delete cache entry for key=%s, filename=%s",
+                        e.key, getFilenameForKey(e.key));
             }
             iterator.remove();
             prunedFiles++;
@@ -325,6 +352,7 @@ public class DiskBasedCache implements Cache {
             mTotalSize -= entry.size;
             mEntries.remove(key);
         }
+        mMemoryMap.remove(key);
     }
 
     /**
@@ -605,5 +633,30 @@ public class DiskBasedCache implements Cache {
         return result;
     }
 
+    private class CacheWriteHandlerThread extends HandlerThread {
+        private final Handler mHandler;
+
+        public CacheWriteHandlerThread() {
+            super(CacheWriteHandlerThread.class.getName(), Process.THREAD_PRIORITY_BACKGROUND);
+            start();
+            mHandler = new Handler(getLooper());
+        }
+
+        public void insertIntoCacheDelayed(final String key) {
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Entry entry = mMemoryMap.remove(key);
+                    if (entry != null) {
+                        put(key, entry, true);
+                    }
+                }
+            }, DELAY_CACHE_WRITE);
+        }
+
+        public void clear() {
+            mHandler.removeCallbacksAndMessages(null);
+        }
+    }
 
 }

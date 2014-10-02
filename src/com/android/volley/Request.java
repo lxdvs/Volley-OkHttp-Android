@@ -659,4 +659,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public long getRequestTime() {
         return mRequestTime;
     }
+
+    public boolean shouldCacheInstantly() {
+        return true;
+    }
 }
