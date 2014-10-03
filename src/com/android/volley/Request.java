@@ -114,6 +114,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /** The retry policy for this request. */
     private RetryPolicy mRetryPolicy;
 
+    // request network time
+    private long mRequestTime;
+
     /**
      * When a request can be retrieved from cache but must be refreshed from
      * the network, the cache entry will be stored here so that in the event of
@@ -148,6 +151,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         mUrl = url;
         mErrorListener = listener;
         setRetryPolicy(new DefaultRetryPolicy());
+        mRequestTime = -1;
 
         mDefaultTrafficStatsTag = findDefaultTrafficStatsTag(url);
     }
@@ -646,5 +650,13 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     protected boolean isFifoProcessed() {
         return true;
+    }
+
+    public void setRequestTime(long requestTime) {
+        mRequestTime = requestTime;
+    }
+
+    public long getRequestTime() {
+        return mRequestTime;
     }
 }
