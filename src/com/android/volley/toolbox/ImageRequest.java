@@ -17,11 +17,9 @@
 package com.android.volley.toolbox;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
@@ -149,6 +147,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
      * The real guts of parseNetworkResponse. Broken out for readability.
      */
     private Response<CacheableBitmapDrawable> doParse(NetworkResponse response) {
+        NetworkMonitor.add(response, this);
         response.isImage = true;
         byte[] data = response.data;
         BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
