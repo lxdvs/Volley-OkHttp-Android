@@ -35,7 +35,7 @@ public class NoCache implements Cache {
     public Entry getHeaders(String key) { return null;}
 
     @Override
-    public void put(String key, Entry entry) {
+    public void put(String key, Entry entry, boolean cacheInstantly) {
     }
 
     @Override

@@ -20,10 +20,13 @@ import android.annotation.TargetApi;
 import android.net.TrafficStats;
 import android.os.Build;
 import android.os.Process;
+import android.util.Pair;
 
+import com.android.volley.Cache.Entry;
 import com.android.volley.Request.ReturnStrategy;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Provides a thread for performing network dispatch from a queue of requests.
@@ -50,8 +53,7 @@ public class NetworkDispatcher extends Thread {
     /**
      * Creates a new network dispatcher thread.  You must call {@link #start()}
      * in order to begin processing.
-     *
-     * @param queue Queue of incoming requests for triage
+     *  @param queue Queue of incoming requests for triage
      * @param network Network interface to use for performing requests
      * @param cache Cache interface to use for writing responses to cache
      * @param delivery Delivery interface to use for posting responses
@@ -131,10 +133,12 @@ public class NetworkDispatcher extends Thread {
                 Response<?> response = request.parseNetworkResponse(networkResponse);
                 request.addMarker("network-parse-complete");
 
+
+
                 // Write to cache if applicable.
                 // TODO: Only update cache metadata instead of entire record for 304s.
                 if (request.shouldCache() && response.cacheEntry != null) {
-                    mCache.put(request.getCacheKey(), response.cacheEntry);
+                    mCache.put(request.getCacheKey(), response.cacheEntry, request.shouldCacheInstantly());
                     request.addMarker("network-cache-written");
                 }
 

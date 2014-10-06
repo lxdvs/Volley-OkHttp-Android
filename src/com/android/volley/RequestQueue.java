@@ -16,6 +16,13 @@
 
 package com.android.volley;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Pair;
+
+import com.android.volley.Request.Priority;
+import com.android.volley.Request.ReturnStrategy;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,14 +33,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
-import android.util.Pair;
-
-import com.android.volley.Request.Priority;
-import com.android.volley.Request.ReturnStrategy;
 
 /**
  * A request dispatch queue with a thread pool of dispatchers.

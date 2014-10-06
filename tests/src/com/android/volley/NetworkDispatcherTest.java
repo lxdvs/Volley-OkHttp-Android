@@ -49,7 +49,7 @@ public class NetworkDispatcherTest extends TestCase {
         mNetwork = new MockNetwork();
         mCache = new MockCache();
         mRequest = new MockRequest();
-        mDispatcher = new NetworkDispatcher(mNetworkQueue, mNetwork, mCache, mDelivery);
+        mDispatcher = new NetworkDispatcher(mNetworkQueue, mNetwork, mCache, mDelivery, mCacheWriteQueue);
         mDispatcher.start();
     }
 
