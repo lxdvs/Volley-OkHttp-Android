@@ -283,7 +283,7 @@ public class DiskBasedCache implements Cache {
      * Prunes the cache to fit the amount of bytes specified.
      * @param neededSpace The amount of bytes we are trying to fit into the cache.
      */
-    private void pruneIfNeeded(int neededSpace, boolean preferImagePruning) {
+    private synchronized void pruneIfNeeded(int neededSpace, boolean preferImagePruning) {
         if ((mTotalSize + neededSpace) < mMaxCacheSizeInBytes) {
             return;
         }
