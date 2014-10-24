@@ -112,7 +112,7 @@ public class DiskBasedCache implements Cache {
     }
 
     @Override
-    public Entry getHeaders(String key) {
+    public synchronized Entry getHeaders(String key) {
         CacheHeader entry = mEntries.get(key);
         // if the entry does not exist, return.
         if (entry == null) {
