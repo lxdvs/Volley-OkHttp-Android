@@ -1,5 +1,9 @@
 package com.android.volley.toolbox;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Pair;
 
@@ -11,8 +15,8 @@ import java.util.List;
 public class NetworkMonitor {
 
     // Bandwidths expressed in kB/s
-    public static final int BANDWIDTH_HYSTERETIC_LOWER = 30;
-    public static final int BANDWIDTH_HYSTERETIC_UPPER = 50;
+    public static final int BANDWIDTH_HYSTERETIC_LOWER = 40; // Just above the upper limit of 2G
+    public static final int BANDWIDTH_HYSTERETIC_UPPER = 80; // Listing Image loads ~4s apiece
 
     private static final boolean ENABLE_LOGGING = false;
 
@@ -21,6 +25,15 @@ public class NetworkMonitor {
     public static boolean lowBandwidth;
 
     private static RingQueue<Pair<Integer, Long>> mImageTimings = new RingQueue<Pair<Integer, Long>>(RING_SIZE);
+
+    public static void initialize(Context context) {
+        NetworkClass netclass = getNetworkClass(context);
+        log("NETMON", "Net class: " + netclass.name());
+        if (getNetworkClass(context).ordinal() <= NetworkClass.TYPE_2G.ordinal()) {
+            log("NETMON", "Low-Bandwidth flag On");
+            lowBandwidth = true;
+        }
+    }
 
     public static void add(NetworkResponse response, ImageRequest request) {
         if (request.getRequestTime() == -1) {
@@ -86,5 +99,53 @@ public class NetworkMonitor {
         public boolean isFull() {
             return mBackingArray.size() == capacity;
         }
+    }
+
+    public static enum NetworkClass {
+        TYPE_2G,
+        TYPE_3G,
+        TYPE_4G,
+        TYPE_WIFI,
+        Unknown;
+    }
+
+    public static NetworkClass getNetworkClass(Context context) {
+        ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connManager != null) {
+            NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+            if (wifi != null && wifi.isConnected()) {
+                return NetworkClass.TYPE_WIFI;
+            }
+        }
+
+        TelephonyManager telephonyManager = (TelephonyManager)
+                context.getSystemService(Context.TELEPHONY_SERVICE);
+        if (telephonyManager != null) {
+            int networkType = telephonyManager.getNetworkType();
+            switch (networkType) {
+                case TelephonyManager.NETWORK_TYPE_GPRS:
+                case TelephonyManager.NETWORK_TYPE_EDGE:
+                case TelephonyManager.NETWORK_TYPE_CDMA:
+                case TelephonyManager.NETWORK_TYPE_1xRTT:
+                case TelephonyManager.NETWORK_TYPE_IDEN:
+                case TelephonyManager.NETWORK_TYPE_UMTS:
+                    return NetworkClass.TYPE_2G;
+                case TelephonyManager.NETWORK_TYPE_EVDO_0:
+                case TelephonyManager.NETWORK_TYPE_EVDO_A:
+                case TelephonyManager.NETWORK_TYPE_HSDPA:
+                case TelephonyManager.NETWORK_TYPE_HSUPA:
+                case TelephonyManager.NETWORK_TYPE_HSPA:
+                case TelephonyManager.NETWORK_TYPE_EVDO_B:
+                case TelephonyManager.NETWORK_TYPE_EHRPD:
+                    return NetworkClass.TYPE_3G;
+                case TelephonyManager.NETWORK_TYPE_HSPAP:
+                case TelephonyManager.NETWORK_TYPE_LTE:
+                    return NetworkClass.TYPE_4G;
+                default:
+                    return NetworkClass.Unknown;
+            }
+        }
+        return NetworkClass.Unknown;
     }
 }
