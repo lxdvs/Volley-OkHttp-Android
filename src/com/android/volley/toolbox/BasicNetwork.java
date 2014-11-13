@@ -122,6 +122,7 @@ public class BasicNetwork implements Network {
                 return new NetworkResponse(statusCode, responseContents, responseHeaders, false);
             } catch (OutOfMemoryError e) {
                 request.onParseOOM(e);
+                throw new RuntimeException("OOM " + request.getUrl(), e);
             } catch (SocketTimeoutException e) {
                 attemptRetryOnException("socket", request, new TimeoutError());
             } catch (ConnectTimeoutException e) {
