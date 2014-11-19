@@ -34,10 +34,10 @@ import com.android.volley.VolleyLog;
  */
 public class ImageRequest extends Request<CacheableBitmapDrawable> {
     /** Socket timeout in milliseconds for image requests */
-    private static final int IMAGE_TIMEOUT_MS = 1000;
+    private static final int IMAGE_TIMEOUT_MS = 10000;
 
     /** Default number of retries for image requests */
-    private static final int IMAGE_MAX_RETRIES = 2;
+    private static final int IMAGE_MAX_RETRIES = 3;
 
     /** Default backoff multiplier for image requests */
     private static final float IMAGE_BACKOFF_MULT = 2f;
