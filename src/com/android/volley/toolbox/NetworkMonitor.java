@@ -7,6 +7,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Pair;
 
+import com.android.volley.Network;
 import com.android.volley.NetworkResponse;
 
 import java.util.ArrayList;
@@ -102,11 +103,17 @@ public class NetworkMonitor {
     }
 
     public static enum NetworkClass {
-        TYPE_2G,
-        TYPE_3G,
-        TYPE_4G,
-        TYPE_WIFI,
-        Unknown;
+        TYPE_2G("2G"),
+        TYPE_3G("3G"),
+        TYPE_4G("4G"),
+        TYPE_WIFI("Wifi"),
+        Unknown("Unknown");
+
+        public final String description;
+
+        NetworkClass(String description) {
+            this.description = description;
+        }
     }
 
     public static NetworkClass getNetworkClass(Context context) {
