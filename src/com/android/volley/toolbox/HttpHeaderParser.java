@@ -121,6 +121,10 @@ public class HttpHeaderParser {
      */
     public static String parseCharset(Map<String, String> headers) {
         String contentType = headers.get(HTTP.CONTENT_TYPE);
+        if (contentType == null) {
+            // HTTP header names should be case-insensitive, account for lowercase "content-type" as well
+            contentType = headers.get(HTTP.CONTENT_TYPE.toLowerCase());
+        }
         if (contentType != null) {
             String[] params = contentType.split(";");
             for (int i = 1; i < params.length; i++) {
