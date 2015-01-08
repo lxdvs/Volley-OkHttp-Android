@@ -24,12 +24,10 @@ public class NetworkMonitor {
 
     public static boolean lowBandwidth;
     private static boolean mIsRoaming;
-    private static boolean mForceLowBandwidthIfRoaming;
 
     private static RingQueue<Pair<Integer, Long>> mImageTimings = new RingQueue<Pair<Integer, Long>>(RING_SIZE);
 
     public static void initialize(Context context) {
-        mForceLowBandwidthIfRoaming = false;
         NetworkClass netclass = getNetworkClass(context);
         log("NETMON", "Net class: " + netclass.name());
         if (netclass.ordinal() <= NetworkClass.TYPE_2G.ordinal()) {
@@ -60,7 +58,7 @@ public class NetworkMonitor {
             if (bandwidthKBPS < BANDWIDTH_HYSTERETIC_LOWER) {
                 lowBandwidth = true;
                 log("NETMON", "Low-Bandwidth flag On");
-            } else if (bandwidthKBPS > BANDWIDTH_HYSTERETIC_UPPER && (!mIsRoaming || !mForceLowBandwidthIfRoaming)) {
+            } else if (bandwidthKBPS > BANDWIDTH_HYSTERETIC_UPPER)) {
                 lowBandwidth = false;
                 log("NETMON", "Low-Bandwidth flag Off");
             }
@@ -68,8 +66,8 @@ public class NetworkMonitor {
 
     }
 
-    public static void forceLowBandwidthIfRoaming(boolean force) {
-        mForceLowBandwidthIfRoaming = force;
+    public static boolean isRoaming() {
+        return mIsRoaming;
     }
 
     private static final void log(String tag, String content) {
