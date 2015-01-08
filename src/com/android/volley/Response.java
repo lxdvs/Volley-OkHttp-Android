@@ -57,6 +57,9 @@ public class Response<T> {
     /** Cache metadata for this response, or null in the case of error. */
     public final Cache.Entry cacheEntry;
 
+    /** Whether this is a cached response instead of a fresh network response. */
+    public boolean fromCache = false;
+
     /** Detailed error information if <code>errorCode != OK</code>. */
     public final VolleyError error;
 

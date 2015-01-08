@@ -65,6 +65,6 @@ public class ClearCacheRequest extends Request<Object> {
     }
 
     @Override
-    protected void deliverResponse(Object response) {}
+    protected void deliverResponse(Object response, boolean fromCache) {}
 
 }
