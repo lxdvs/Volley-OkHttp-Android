@@ -201,7 +201,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
     }
 
     @Override
-    protected void deliverResponse(CacheableBitmapDrawable response) {
+    protected void deliverResponse(CacheableBitmapDrawable response, boolean fromCache) {
         mListener.onResponse(response);
     }
 
