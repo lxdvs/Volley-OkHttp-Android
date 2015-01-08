@@ -29,7 +29,7 @@ public class NetworkMonitor {
     private static RingQueue<Pair<Integer, Long>> mImageTimings = new RingQueue<Pair<Integer, Long>>(RING_SIZE);
 
     public static void initialize(Context context) {
-        mForceLowBandwidthIfRoaming = true;
+        mForceLowBandwidthIfRoaming = false;
         NetworkClass netclass = getNetworkClass(context);
         log("NETMON", "Net class: " + netclass.name());
         if (netclass.ordinal() <= NetworkClass.TYPE_2G.ordinal()) {
