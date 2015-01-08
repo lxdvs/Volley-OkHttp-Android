@@ -58,7 +58,7 @@ public class NetworkMonitor {
             if (bandwidthKBPS < BANDWIDTH_HYSTERETIC_LOWER) {
                 lowBandwidth = true;
                 log("NETMON", "Low-Bandwidth flag On");
-            } else if (bandwidthKBPS > BANDWIDTH_HYSTERETIC_UPPER)) {
+            } else if (bandwidthKBPS > BANDWIDTH_HYSTERETIC_UPPER) {
                 lowBandwidth = false;
                 log("NETMON", "Low-Bandwidth flag Off");
             }
