@@ -126,6 +126,11 @@ public class CacheDispatcher extends Thread {
 
                 if (!entry.refreshNeeded() || request.isJoined()) {
                     // Completely unexpired cache hit. Just deliver the response.
+                    if (request.isJoined()) {
+                        // Mark the response as intermediate.
+                        response.intermediate = true;
+                    }
+
                     mDelivery.postResponse(request, response);
                 } else {
                     // Soft-expired cache hit. We can deliver the cached response,
