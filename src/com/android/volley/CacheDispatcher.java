@@ -129,6 +129,7 @@ public class CacheDispatcher extends Thread {
                     if (request.isJoined()) {
                         // Mark the response as intermediate.
                         response.intermediate = true;
+                        request.setJoined(false);
                     }
 
                     mDelivery.postResponse(request, response);
