@@ -108,6 +108,11 @@ public interface Cache {
         public void setTTL(long ttl) {
             this.ttl = ttl;
         }
+
+        // this will force the cache to be expired
+        public void expireCache() {
+            setTTL(0);
+        }
     }
 
 }

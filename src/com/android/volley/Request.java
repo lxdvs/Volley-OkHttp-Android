@@ -694,4 +694,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public void setJoined(boolean joined) {
         mJoined = joined;
     }
+
+    public void expireCache() {
+        // no - op
+    }
 }
