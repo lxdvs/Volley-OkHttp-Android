@@ -95,13 +95,13 @@ public class CacheDispatcher extends Thread {
                 // Attempt to retrieve this item from cache.
                 Cache.Entry entry = mCache.get(request.getCacheKey());
 
-                if (!request.isJoined()) {
-                    // If the request has been canceled, don't bother dispatching it.
-                    if (request.isCanceled()) {
-                        request.finish("cache-discard-canceled");
-                        continue;
-                    }
+                // If the request has been canceled, don't bother dispatching it.
+                if (request.isCanceled()) {
+                    request.finish("cache-discard-canceled");
+                    continue;
+                }
 
+                if (!request.isJoined()) {
                     if (entry == null) {
                         request.addMarker("cache-miss");
                         // Cache miss; send off to the network dispatcher.
@@ -124,14 +124,13 @@ public class CacheDispatcher extends Thread {
                         new NetworkResponse(entry.data, entry.responseHeaders));
                 request.addMarker("cache-hit-parsed");
 
-                if (!entry.refreshNeeded() || request.isJoined()) {
+                if (request.isJoined()) {
+                    // Mark the response as intermediate.
+                    response.intermediate = true;
+                    // deliver cached response.
+                    mDelivery.postResponse(request, response);
+                } else if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
-                    if (request.isJoined()) {
-                        // Mark the response as intermediate.
-                        response.intermediate = true;
-                        request.setJoined(false);
-                    }
-
                     mDelivery.postResponse(request, response);
                 } else {
                     // Soft-expired cache hit. We can deliver the cached response,
