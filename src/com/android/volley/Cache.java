@@ -47,6 +47,13 @@ public interface Cache {
     public void put(String key, Entry entry, boolean cacheInstantly);
 
     /**
+     * update a cache entry with new headers
+     * @param cacheKey
+     * @param entry
+     */
+    public void updateEntry(String cacheKey, Entry entry);
+
+    /**
      * Performs any potentially long-running actions needed to initialize the cache;
      * will be called from a worker thread.
      */
@@ -69,6 +76,7 @@ public interface Cache {
      * Empties the cache.
      */
     public void clear();
+
 
     /**
      * Data and metadata for an entry returned by the cache.

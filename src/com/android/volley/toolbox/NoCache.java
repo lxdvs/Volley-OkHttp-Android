@@ -39,6 +39,11 @@ public class NoCache implements Cache {
     }
 
     @Override
+    public void updateEntry(String cacheKey, Entry entry) {
+
+    }
+
+    @Override
     public void invalidate(String key, boolean fullExpire) {
     }
 
