@@ -276,7 +276,7 @@ public class RequestQueue {
 
         // If the request is uncacheable, skip the cache queue and go straight to the network.
         if (request.getReturnStrategy() == ReturnStrategy.NETWORK_ONLY) {
-            mNetworkQueue.add(request);
+            processNetworkRequest(request);
             return request;
         }
 
@@ -291,6 +291,7 @@ public class RequestQueue {
                 }
                 stagedRequests.add(request);
                 mWaitingRequests.put(cacheKey, stagedRequests);
+                request.setJoined(true);
                 if (VolleyLog.DEBUG) {
                     VolleyLog.v("Request for cacheKey=%s is in flight, putting on hold.", cacheKey);
                 }
@@ -298,8 +299,10 @@ public class RequestQueue {
                 // Insert 'null' queue for this cacheKey, indicating there is now a request in
                 // flight.
                 mWaitingRequests.put(cacheKey, null);
-                mCacheQueue.add(request);
             }
+
+            mCacheQueue.add(request);
+
             return request;
         }
     }

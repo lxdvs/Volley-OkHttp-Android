@@ -46,6 +46,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     private static final String DEFAULT_PARAMS_ENCODING = "UTF-8";
 
     /**
+     * Identifies if the request is joined to another request
+     */
+    private boolean mJoined;
+
+    /**
      * Supported request methods.
      */
     public interface Method {
@@ -666,5 +671,13 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     public void onParseOOM(OutOfMemoryError e) {
         // no-op
+    }
+
+    public boolean isJoined() {
+        return mJoined;
+    }
+
+    public void setJoined(boolean joined) {
+        mJoined = joined;
     }
 }

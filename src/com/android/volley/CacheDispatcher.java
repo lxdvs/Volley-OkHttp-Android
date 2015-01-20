@@ -16,11 +16,11 @@
 
 package com.android.volley;
 
-import java.util.concurrent.BlockingQueue;
-
 import android.os.Process;
 
 import com.android.volley.Request.ReturnStrategy;
+
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Provides a thread for performing cache triage on a queue of requests.
@@ -92,27 +92,30 @@ public class CacheDispatcher extends Thread {
                 final Request<?> request = mCacheQueue.take();
                 request.addMarker("cache-queue-take");
 
+                // Attempt to retrieve this item from cache.
+                Cache.Entry entry = mCache.get(request.getCacheKey());
+
                 // If the request has been canceled, don't bother dispatching it.
                 if (request.isCanceled()) {
                     request.finish("cache-discard-canceled");
                     continue;
                 }
-                
-                // Attempt to retrieve this item from cache.
-                Cache.Entry entry = mCache.get(request.getCacheKey());
-                if (entry == null) {
-                    request.addMarker("cache-miss");
-                    // Cache miss; send off to the network dispatcher.
-                    mNetworkQueue.processNetworkRequest(request);
-                    continue;
-                }
 
-                // If it is completely expired, just send it to the network.
-                if (entry.isExpired()) {
-                    request.addMarker("cache-hit-expired");
-                    request.setCacheEntry(entry);
-                    mNetworkQueue.processNetworkRequest(request);
-                    continue;
+                if (!request.isJoined()) {
+                    if (entry == null) {
+                        request.addMarker("cache-miss");
+                        // Cache miss; send off to the network dispatcher.
+                        mNetworkQueue.processNetworkRequest(request);
+                        continue;
+                    }
+
+                    // If it is completely expired, just send it to the network.
+                    if (entry.isExpired()) {
+                        request.addMarker("cache-hit-expired");
+                        request.setCacheEntry(entry);
+                        mNetworkQueue.processNetworkRequest(request);
+                        continue;
+                    }
                 }
 
                 // We have a cache hit; parse its data for delivery back to the request.
@@ -121,7 +124,12 @@ public class CacheDispatcher extends Thread {
                         new NetworkResponse(entry.data, entry.responseHeaders));
                 request.addMarker("cache-hit-parsed");
 
-                if (!entry.refreshNeeded()) {
+                if (request.isJoined()) {
+                    // Mark the response as intermediate.
+                    response.intermediate = true;
+                    // deliver cached response.
+                    mDelivery.postResponse(request, response);
+                } else if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
                     mDelivery.postResponse(request, response);
                 } else {
