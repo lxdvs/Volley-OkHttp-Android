@@ -116,6 +116,9 @@ public class CacheDispatcher extends Thread {
                         mNetworkQueue.processNetworkRequest(request);
                         continue;
                     }
+                } else if (entry == null) {
+                    // joined to an incomplete request. just continue. 
+                    continue;
                 }
 
                 // We have a cache hit; parse its data for delivery back to the request.
