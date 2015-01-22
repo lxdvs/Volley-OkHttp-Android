@@ -20,6 +20,7 @@ import android.annotation.TargetApi;
 import android.net.TrafficStats;
 import android.os.Build;
 import android.os.Process;
+import android.os.SystemClock;
 
 import com.android.volley.Request.ReturnStrategy;
 
@@ -85,6 +86,7 @@ public class NetworkDispatcher extends Thread {
     public void run() {
         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         while (true) {
+            long startTimeMs = SystemClock.elapsedRealtime();
             Request<?> request;
             try {
                 // Take a request from the queue.
@@ -149,13 +151,16 @@ public class NetworkDispatcher extends Thread {
                 if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
                     continue;
                 }
+                volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
                 parseAndDeliverNetworkError(request, volleyError);
             } catch (Exception e) {
                 VolleyLog.e(e, "Unhandled exception %s", e.toString());
                 if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
                     continue;
                 }
-                mDelivery.postError(request, new VolleyError(e));
+                VolleyError volleyError = new VolleyError(e);
+                volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
+                mDelivery.postError(request, volleyError);
             }
         }
     }
