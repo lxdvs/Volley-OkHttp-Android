@@ -176,4 +176,12 @@ public class CacheDispatcher extends Thread {
         Cache.Entry entry = mCache.getHeaders(request.getCacheKey());
         return entry == null || entry.isExpired();
     }
+
+    public void expireCache(Request request) {
+        Cache.Entry entry = mCache.getHeaders(request.getCacheKey());
+        if (entry != null) {
+            entry.expireCache();
+            mCache.updateEntry(request.getCacheKey(), entry);
+        }
+    }
 }

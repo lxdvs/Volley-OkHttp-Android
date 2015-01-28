@@ -341,6 +341,10 @@ public class RequestQueue {
         return mCacheDispatcher.willMissCache(request);
     }
 
+    public void expireCache(Request request) {
+        mCacheDispatcher.expireCache(request);
+    }
+
     /**
      * @param request a request to process on the network
      * @return true if this request was processed on the dedicated high-priority dispatcher
