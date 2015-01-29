@@ -23,13 +23,14 @@ public class NetworkMonitor {
     public static final int RING_SIZE = 4;
 
     public static boolean lowBandwidth;
+    private static boolean mIsRoaming;
 
     private static RingQueue<Pair<Integer, Long>> mImageTimings = new RingQueue<Pair<Integer, Long>>(RING_SIZE);
 
     public static void initialize(Context context) {
         NetworkClass netclass = getNetworkClass(context);
         log("NETMON", "Net class: " + netclass.name());
-        if (getNetworkClass(context).ordinal() <= NetworkClass.TYPE_2G.ordinal()) {
+        if (netclass.ordinal() <= NetworkClass.TYPE_2G.ordinal()) {
             log("NETMON", "Low-Bandwidth flag On");
             lowBandwidth = true;
         }
@@ -63,6 +64,10 @@ public class NetworkMonitor {
             }
         }
 
+    }
+
+    public static boolean isRoaming() {
+        return mIsRoaming;
     }
 
     private static final void log(String tag, String content) {
@@ -102,6 +107,7 @@ public class NetworkMonitor {
     }
 
     public static enum NetworkClass {
+        TYPE_ROAMING("roaming"),
         TYPE_2G("2G"),
         TYPE_3G("3G"),
         TYPE_4G("4G"),
@@ -121,6 +127,7 @@ public class NetworkMonitor {
             NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 
             if (wifi != null && wifi.isConnected()) {
+                mIsRoaming = false;
                 return NetworkClass.TYPE_WIFI;
             }
         }
@@ -128,6 +135,12 @@ public class NetworkMonitor {
         TelephonyManager telephonyManager = (TelephonyManager)
                 context.getSystemService(Context.TELEPHONY_SERVICE);
         if (telephonyManager != null) {
+            if (telephonyManager.isNetworkRoaming()) {
+                mIsRoaming = true;
+                return NetworkClass.TYPE_ROAMING;
+            }
+            mIsRoaming = false;
+
             int networkType = telephonyManager.getNetworkType();
             switch (networkType) {
                 case TelephonyManager.NETWORK_TYPE_GPRS:
