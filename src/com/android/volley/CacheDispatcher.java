@@ -135,6 +135,9 @@ public class CacheDispatcher extends Thread {
                 } else if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
                     mDelivery.postResponse(request, response);
+                } else if (request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
+                    // if network if no cache only cache respond
+                    mDelivery.postResponse(request, response);
                 } else {
                     // Soft-expired cache hit. We can deliver the cached response,
                     // but we need to also send the request to the network for
@@ -147,10 +150,10 @@ public class CacheDispatcher extends Thread {
                         request.addMarker("cache-error-delivery-response-set");
                         mNetworkQueue.processNetworkRequest(request);
                     } else {
-                        
+
                         // Mark the response as intermediate.
                         response.intermediate = true;
-                        
+
                         // Post the intermediate response back to the user and have
                         // the delivery then forward the request along to the network.
                         mDelivery.postResponse(request, response, new Runnable() {

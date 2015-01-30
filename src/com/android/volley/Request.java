@@ -67,6 +67,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * Supported request methods.
+     * // TODO NICK: simplify to Double and Single with cache invalidation
      */
     public enum ReturnStrategy {
         DOUBLE, // You'll get called back into twice, once for cached result and once for network delivery
