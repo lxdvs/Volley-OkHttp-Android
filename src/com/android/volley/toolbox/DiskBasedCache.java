@@ -142,9 +142,9 @@ public class DiskBasedCache implements Cache {
         CountingInputStream cis = null;
         try {
             cis = new CountingInputStream(new FileInputStream(file));
-            CacheHeader.readHeader(cis); // eat header
+            CacheHeader fullCacheHeader = CacheHeader.readHeader(cis, true);
             byte[] data = streamToBytes(cis, (int) (file.length() - cis.bytesRead));
-            return entry.toCacheEntry(data);
+            return fullCacheHeader.toCacheEntry(data);
         } catch (IOException e) {
             VolleyLog.d("%s: %s", file.getAbsolutePath(), e.toString());
             remove(key);
@@ -181,7 +181,7 @@ public class DiskBasedCache implements Cache {
             BufferedInputStream fis = null;
             try {
                 fis = new BufferedInputStream(new FileInputStream(file));
-                CacheHeader entry = CacheHeader.readHeader(fis);
+                CacheHeader entry = CacheHeader.readHeader(fis, false);
                 entry.size = file.length();
                 putEntry(entry.key, entry);
             } catch (IOException e) {
@@ -440,7 +440,7 @@ public class DiskBasedCache implements Cache {
          * @param is The InputStream to read from.
          * @throws IOException
          */
-        public static CacheHeader readHeader(InputStream is) throws IOException {
+        public static CacheHeader readHeader(InputStream is, boolean readFull) throws IOException {
             CacheHeader entry = new CacheHeader();
 
             int magic = readInt(is);
@@ -456,7 +456,13 @@ public class DiskBasedCache implements Cache {
             entry.serverDate = readLong(is);
             entry.ttl = readLong(is);
             entry.softTtl = readLong(is);
-            entry.responseHeaders = readStringStringMap(is);
+
+            Map<String, String> headers = readStringStringMap(is);
+            if (readFull) {
+                entry.responseHeaders = headers;
+            } else {
+                entry.responseHeaders = new HashMap<>();
+            }
             return entry;
         }
 
