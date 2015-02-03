@@ -260,6 +260,7 @@ public class DiskBasedCache implements Cache {
     private void updateEntrySynchronous(String key, Entry entry) {
         Entry cachedEntry = get(key);
         entry.data = cachedEntry.data;
+        entry.responseHeaders = cachedEntry.responseHeaders;
         put(key, entry, true);
     }
 
