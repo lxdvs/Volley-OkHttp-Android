@@ -145,7 +145,7 @@ public class NetworkDispatcher extends Thread {
                 }
 
                 // Post the response back.
-                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
+                if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE)) {
                     request.cancel();
                 } else {
                     request.markDelivery(Request.DeliveryType.Network);
@@ -153,14 +153,14 @@ public class NetworkDispatcher extends Thread {
 
                 mDelivery.postResponse(request, response);
             } catch (VolleyError volleyError) {
-                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
+                if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE)) {
                     continue;
                 }
                 volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
                 parseAndDeliverNetworkError(request, volleyError);
             } catch (Exception e) {
                 VolleyLog.e(e, "Unhandled exception %s", e.toString());
-                if (request.hasHadResponseDelivered() && request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE) {
+                if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE)) {
                     continue;
                 }
                 VolleyError volleyError = new VolleyError(e);

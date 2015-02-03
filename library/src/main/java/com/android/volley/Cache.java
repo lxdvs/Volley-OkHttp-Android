@@ -82,6 +82,9 @@ public interface Cache {
      * Data and metadata for an entry returned by the cache.
      */
     public static class Entry {
+
+        public static final String KEY_CACHED_TTL = "ttl";
+        public static final String KEY_CACHED_SOFTTTL = "softtl";
         /** The data returned from cache. */
         public byte[] data;
 
@@ -120,9 +123,18 @@ public interface Cache {
             this.ttl = ttl;
         }
 
+        public void setSoftTTL(long softTtl) {
+            this.softTtl = softTtl;
+        }
+
         // this will force the cache to be expired
         public void expireCache() {
             setTTL(0);
+        }
+
+        // this will force the cache to be expired
+        public void expireSoftCache() {
+            setSoftTTL(0);
         }
     }
 

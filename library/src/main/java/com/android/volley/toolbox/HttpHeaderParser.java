@@ -90,12 +90,25 @@ public class HttpHeaderParser {
             softExpire = now + (serverExpires - serverDate);
         }
 
+        if (softExpire == 0) {
+            String softTtlString = headers.get(Cache.Entry.KEY_CACHED_SOFTTTL);
+            if (softTtlString != null) {
+                softExpire = Long.parseLong(softTtlString);
+            }
+        }
+
+        String ttlString = headers.get(Cache.Entry.KEY_CACHED_TTL);
+        long ttl = 0;
+        if (ttlString != null) {
+           ttl = Long.parseLong(ttlString);
+        }
+
         Cache.Entry entry = new Cache.Entry();
         entry.data = response.data;
         entry.isImage = response.isImage;
         entry.etag = serverEtag;
         entry.softTtl = softExpire;
-        entry.ttl = entry.softTtl;
+        entry.ttl = ttl > 0 ? ttl : softExpire;
         entry.serverDate = serverDate;
         entry.responseHeaders = headers;
 
