@@ -442,7 +442,7 @@ public class DiskBasedCache implements Cache {
          * @param is The InputStream to read from.
          * @throws IOException
          */
-        public static CacheHeader readHeader(InputStream is, boolean readFull) throws IOException {
+        public static CacheHeader readHeader(InputStream is, boolean includeResponseHeaders) throws IOException {
             CacheHeader entry = new CacheHeader();
 
             int magic = readInt(is);
@@ -460,7 +460,7 @@ public class DiskBasedCache implements Cache {
             entry.softTtl = readLong(is);
 
             Map<String, String> headers = readStringStringMap(is);
-            if (readFull) {
+            if (includeResponseHeaders) {
                 entry.responseHeaders = headers;
             } else {
                 entry.responseHeaders = new HashMap<>();
