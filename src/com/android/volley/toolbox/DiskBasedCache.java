@@ -240,6 +240,7 @@ public class DiskBasedCache implements Cache {
             }
             fos.write(entry.data);
             fos.close();
+            e.responseHeaders.clear();
             putEntry(key, e);
             return;
         } catch (IOException e) {
