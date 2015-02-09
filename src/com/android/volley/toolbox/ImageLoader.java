@@ -165,6 +165,25 @@ public class ImageLoader {
     }
 
     /**
+     * get Image for background caching
+     * @param requestUrl
+     * @return
+     */
+    public ImageContainer getImageBackground(String requestUrl) {
+        return get(requestUrl, new ImageListener() {
+            @Override
+            public void onResponse(ImageContainer response, boolean isImmediate) {
+
+            }
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }, 0, 0, false, true);
+    }
+
+    /**
      * Returns an ImageContainer for the requested URL.
      *
      * The ImageContainer will contain either the specified default bitmap or the loaded bitmap.
@@ -183,6 +202,11 @@ public class ImageLoader {
         return get(requestUrl, imageListener, maxWidth, maxHeight, true);
     }
 
+    public ImageContainer get(String requestUrl, ImageListener imageListener,
+                              int maxWidth, int maxHeight, boolean doubleRespond) {
+        return get(requestUrl, imageListener, maxWidth, maxHeight, doubleRespond, false);
+    }
+
     /**
      * Issues a bitmap request with the given URL if that image is not available
      * in the cache, and returns a bitmap container that contains all of the data
@@ -196,7 +220,7 @@ public class ImageLoader {
      *     the currently available image (default if remote is not loaded).
      */
     public ImageContainer get(String requestUrl, ImageListener imageListener,
-            int maxWidth, int maxHeight, boolean doubleRespond) {
+            int maxWidth, int maxHeight, boolean doubleRespond, boolean backgroundFetch) {
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
         // Try to look up the request in the cache of remote images.
@@ -242,7 +266,7 @@ public class ImageLoader {
                 public void onResponse(CacheableBitmapDrawable response) {
                     onGetImageSuccess(cacheKey, response);
                 }
-            }, maxWidth, maxHeight,
+            }, maxWidth, maxHeight, backgroundFetch,
             Config.RGB_565, new ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {

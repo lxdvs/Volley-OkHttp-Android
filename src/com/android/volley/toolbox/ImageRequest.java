@@ -46,6 +46,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
     private final Config mDecodeConfig;
     private final int mMaxWidth;
     private final int mMaxHeight;
+    private final boolean mBackgroundFetch;
 
     /** Decoding lock so that we don't decode more than one image at a time (to avoid OOM's) */
     private static final Object sDecodeLock = new Object();
@@ -71,7 +72,8 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
      * @param decodeConfig Format to decode the bitmap to
      * @param errorListener Error listener, or null to ignore errors
      */
-    public ImageRequest(Context context, String url, ImageLoader.ImageCache imageCache, Response.Listener<CacheableBitmapDrawable> listener, int maxWidth, int maxHeight,
+    public ImageRequest(Context context, String url, ImageLoader.ImageCache imageCache, Response.Listener<CacheableBitmapDrawable> listener,
+            int maxWidth, int maxHeight, boolean backgroundFetch,
             Config decodeConfig, Response.ErrorListener errorListener) {
         super(Method.GET, url, errorListener);
         setRetryPolicy(
@@ -82,11 +84,12 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         mMaxHeight = maxHeight;
         mContext = context;
         mCache = imageCache;
+        mBackgroundFetch = backgroundFetch;
     }
 
     @Override
     public Priority getPriority() {
-        return Priority.LOW;
+        return mBackgroundFetch ? Priority.BACKGROUND : Priority.LOW;
     }
 
     /**
