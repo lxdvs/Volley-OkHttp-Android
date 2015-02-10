@@ -149,6 +149,9 @@ public class DiskBasedCache implements Cache {
             VolleyLog.d("%s: %s", file.getAbsolutePath(), e.toString());
             remove(key);
             return null;
+        } catch (OutOfMemoryError e) {
+            VolleyLog.d("OOM: %s: %s", file.getAbsolutePath(), e.toString());
+            return null;
         } finally {
             if (cis != null) {
                 try {
