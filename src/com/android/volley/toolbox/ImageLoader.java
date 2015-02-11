@@ -216,6 +216,7 @@ public class ImageLoader {
      * @param imageListener The listener to call when the remote image is loaded
      * @param maxWidth The maximum width of the returned image.
      * @param maxHeight The maximum height of the returned image.
+     * @param backgroundFetch makes the priority background instead of low
      * @return A container object that contains all of the properties of the request, as well as
      *     the currently available image (default if remote is not loaded).
      */
