@@ -325,6 +325,10 @@ public class RequestQueue {
                 String cacheKey = request.getCacheKey();
                 Queue<Request<?>> waitingRequests = mWaitingRequests.remove(cacheKey);
                 if (waitingRequests != null) {
+                    if (waitingRequests.contains(request)) {
+                        waitingRequests.remove(request);
+                    }
+
                     if (VolleyLog.DEBUG) {
                         VolleyLog.v("Releasing %d waiting requests for cacheKey=%s.",
                                 waitingRequests.size(), cacheKey);

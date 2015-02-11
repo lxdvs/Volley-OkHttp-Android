@@ -111,6 +111,11 @@ public class NetworkDispatcher extends Thread {
                     continue;
                 }
 
+                // joined requests shouldn't network respond
+                if (request.isJoined()) {
+                    continue;
+                }
+
                 addTrafficStatsTag(request);
 
                 // Perform the network request.
@@ -131,8 +136,6 @@ public class NetworkDispatcher extends Thread {
                 // Parse the response here on the worker thread.
                 Response<?> response = request.parseNetworkResponse(networkResponse);
                 request.addMarker("network-parse-complete");
-
-
 
                 // Write to cache if applicable.
                 // TODO: Only update cache metadata instead of entire record for 304s.
