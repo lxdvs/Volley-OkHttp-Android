@@ -461,9 +461,9 @@ public class DiskBasedCache implements Cache {
             entry.ttl = readLong(is);
             entry.softTtl = readLong(is);
 
-            Map<String, String> headers = readStringStringMap(is);
             if (includeResponseHeaders) {
-                entry.responseHeaders = headers;
+                entry.responseHeaders = readStringStringMap(is);
+
             } else {
                 entry.responseHeaders = new HashMap<>();
             }
