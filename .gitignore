@@ -7,3 +7,6 @@ tests/gen/*
 .gradle
 build
 .settings
+.DS_Store
+*.iml
+.idea
