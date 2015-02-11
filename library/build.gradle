@@ -1,0 +1,24 @@
+apply plugin: 'com.android.library'
+apply from: 'gradle-maven-push.gradle'
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.squareup.okhttp:okhttp:2.1.0'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.1.0'
+    compile 'com.squareup.okio:okio:1.0.1'
+}
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion '21.1.2'
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 21
+    }
+
+    dexOptions {
+        incremental false
+    }
+}

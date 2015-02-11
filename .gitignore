@@ -8,3 +8,7 @@ tests/gen/*
 build
 .settings
 volley-networking-android.iml
+.idea
+.DS_Store
+*.iml
+local.properties
