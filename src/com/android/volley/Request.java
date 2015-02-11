@@ -539,6 +539,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * lower priorities, in FIFO order.
      */
     public enum Priority {
+        BACKGROUND,
         LOW,
         NORMAL,
         HIGH,
