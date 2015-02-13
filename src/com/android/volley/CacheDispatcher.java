@@ -92,14 +92,14 @@ public class CacheDispatcher extends Thread {
                 final Request<?> request = mCacheQueue.take();
                 request.addMarker("cache-queue-take");
 
-                // Attempt to retrieve this item from cache.
-                Cache.Entry entry = mCache.get(request.getCacheKey());
-
                 // If the request has been canceled, don't bother dispatching it.
                 if (request.isCanceled()) {
                     request.finish("cache-discard-canceled");
                     continue;
                 }
+
+                // Attempt to retrieve this item from cache.
+                Cache.Entry entry = mCache.get(request.getCacheKey());
 
                 if (!request.isJoined()) {
                     if (entry == null) {
@@ -128,10 +128,12 @@ public class CacheDispatcher extends Thread {
                 request.addMarker("cache-hit-parsed");
 
                 if (request.isJoined()) {
-                    // Mark the response as intermediate.
-                    response.intermediate = true;
-                    // deliver cached response.
-                    mDelivery.postResponse(request, response);
+                    if (!entry.isExpired()) {
+                        // Mark the response as intermediate.
+                        response.intermediate = true;
+                        // deliver cached response.
+                        mDelivery.postResponse(request, response);
+                    }
                 } else if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
                     mDelivery.postResponse(request, response);
