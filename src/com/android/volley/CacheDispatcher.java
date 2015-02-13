@@ -18,8 +18,6 @@ package com.android.volley;
 
 import android.os.Process;
 
-import com.android.volley.Request.ReturnStrategy;
-
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -101,23 +99,27 @@ public class CacheDispatcher extends Thread {
                 // Attempt to retrieve this item from cache.
                 Cache.Entry entry = mCache.get(request.getCacheKey());
 
-                if (!request.isJoined()) {
-                    if (entry == null) {
-                        request.addMarker("cache-miss");
+                // should the request be cache only.
+                // if this is true it will never be sent to network.
+                boolean cacheOnlyRequest = request.isJoined();
+
+                // if the entry doesn't exist then it is not in the cache
+                if (entry == null) {
+                    request.addMarker("cache-miss");
+                    if (!cacheOnlyRequest) {
                         // Cache miss; send off to the network dispatcher.
                         mNetworkQueue.processNetworkRequest(request);
-                        continue;
                     }
+                    continue;
+                }
 
-                    // If it is completely expired, just send it to the network.
-                    if (entry.isExpired()) {
-                        request.addMarker("cache-hit-expired");
+                // If it is completely expired, just send it to the network.
+                if (entry.isExpired()) {
+                    request.addMarker("cache-hit-expired");
+                    if (!cacheOnlyRequest) {
                         request.setCacheEntry(entry);
                         mNetworkQueue.processNetworkRequest(request);
-                        continue;
                     }
-                } else if (entry == null) {
-                    // joined to an incomplete request. just continue. 
                     continue;
                 }
 
@@ -127,49 +129,43 @@ public class CacheDispatcher extends Thread {
                         new NetworkResponse(entry.data, entry.responseHeaders));
                 request.addMarker("cache-hit-parsed");
 
-                if (request.isJoined()) {
-                    if (!entry.isExpired()) {
-                        // Mark the response as intermediate.
-                        response.intermediate = true;
-                        // deliver cached response.
-                        mDelivery.postResponse(request, response);
-                    }
-                } else if (!entry.refreshNeeded()) {
+
+                if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
                     mDelivery.postResponse(request, response);
-                } else {
-                    // Soft-expired cache hit. We can deliver the cached response,
-                    // but we need to also send the request to the network for
-                    // refreshing.
-                    request.addMarker("cache-hit-refresh-needed");
-                    request.setCacheEntry(entry);
-
-                    if (request.getReturnStrategy() == ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
+                } else if (request.getReturnStrategy() == Request.ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
+                    // if CACHE_IF_NETWORK_FAILS prep cache response and send to network
+                    // this is a bit weird for a CACHE_IF_NETWORK_FAILS to be not allowed to go to
+                    // the network. But it 'could' happen if the request is joined
+                    if (!cacheOnlyRequest) {
                         request.mCacheResponse = response;
                         request.addMarker("cache-error-delivery-response-set");
                         mNetworkQueue.processNetworkRequest(request);
-                    } else {
-                        
-                        // Mark the response as intermediate.
-                        response.intermediate = true;
-                        
-                        // Post the intermediate response back to the user and have
-                        // the delivery then forward the request along to the network.
-                        mDelivery.postResponse(request, response, new Runnable() {
-                            @Override
-                            public void run() {
-                                mNetworkQueue.processNetworkRequest(request);
-                            }
-                        });
                     }
-                }
+                } else {
+                    // Soft-expired cache hit. We can deliver the cached response,
+                    // but we need to also send the request to the network for
+                    // refreshing if allowed.
+                    request.addMarker("cache-hit-refresh-needed");
+                    request.setCacheEntry(entry);
 
+                    // Mark the response as intermediate.
+                    response.intermediate = true;
+
+                    // Post the intermediate response back to the user and have
+                    // the delivery then forward the request along to the network if allowed
+                    mDelivery.postResponse(request, response, cacheOnlyRequest ? null : new Runnable() {
+                        @Override
+                        public void run() {
+                            mNetworkQueue.processNetworkRequest(request);
+                        }
+                    });
+                }
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
                 if (mQuit) {
                     return;
                 }
-                continue;
             }
         }
     }
