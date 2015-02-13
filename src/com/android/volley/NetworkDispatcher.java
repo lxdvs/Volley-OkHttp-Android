@@ -111,11 +111,6 @@ public class NetworkDispatcher extends Thread {
                     continue;
                 }
 
-                // joined requests shouldn't network respond
-                if (request.isJoined()) {
-                    continue;
-                }
-
                 addTrafficStatsTag(request);
 
                 // Perform the network request.

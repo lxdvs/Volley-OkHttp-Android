@@ -109,11 +109,11 @@ public interface Cache {
         }
 
         /** True if a refresh is needed from the original data source.
-         * 5 second window allows for joined requests to still not need refresh in a backed up queue
+         * 10 second window allows for joined requests to still not need refresh in a backed up queue
          * @return true if refresh is needed
          */
         public boolean refreshNeeded() {
-            return this.softTtl < System.currentTimeMillis() + 5000;
+            return this.softTtl < System.currentTimeMillis() + 10000;
         }
         
         public void setTTL(long ttl) {
