@@ -20,7 +20,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
+import com.android.volley.Cache;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.ParseError;
@@ -54,6 +56,8 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
     private Context mContext;
 
     private ImageLoader.ImageCache mCache;
+    private int TTL;
+    private long mTtl = 0;
 
     /**
      * Creates a new image request, decoding to a maximum specified width and
@@ -133,13 +137,26 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         // Serialize all decode on a global lock to reduce concurrent heap usage.
         synchronized (sDecodeLock) {
             try {
-                return doParse(response);
+                CacheableBitmapDrawable image = doParse(response);
+                if (image == null) {
+                    return Response.error(new ParseError(response));
+                } else {
+                    Cache.Entry entry = HttpHeaderParser.parseCacheHeaders(response);
+                    if (entry != null) {
+                        entry.setTTL(System.currentTimeMillis() + getTTL());
+                    } else if (getTTL() != 0) {
+                        Log.w(getClass().getSimpleName(), getClass().getSimpleName() + " has a TTL, but will not be cached due to network response's cache policy");
+                    }
+                    return Response.success(image, entry);
+                }
             } catch (OutOfMemoryError e) {
                 VolleyLog.e("Caught OOM for %d byte image, url=%s", response.data.length, getUrl());
                 return Response.error(new ParseError(e));
             }
         }
     }
+
+
 
     @Override
     protected boolean isMarkerLogEnabled() {
@@ -149,7 +166,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
     /**
      * The real guts of parseNetworkResponse. Broken out for readability.
      */
-    private Response<CacheableBitmapDrawable> doParse(NetworkResponse response) {
+    private CacheableBitmapDrawable doParse(NetworkResponse response) {
         NetworkMonitor.add(response, this);
         response.isImage = true;
         byte[] data = response.data;
@@ -197,9 +214,9 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         }
 
         if (bitmap == null) {
-            return Response.error(new ParseError(response));
+            return null;
         } else {
-            return Response.success(new CacheableBitmapDrawable(mContext.getResources(), bitmap), HttpHeaderParser.parseCacheHeaders(response));
+            return new CacheableBitmapDrawable(mContext.getResources(), bitmap);
         }
     }
 
@@ -234,5 +251,13 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
     @Override
     protected boolean isFifoProcessed() {
         return false;
+    }
+
+    public long getTTL() {
+        return mTtl;
+    }
+
+    public void setTtl(long ttl) {
+        mTtl = ttl;
     }
 }

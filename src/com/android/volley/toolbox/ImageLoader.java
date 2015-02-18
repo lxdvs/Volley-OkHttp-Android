@@ -180,7 +180,27 @@ public class ImageLoader {
             public void onErrorResponse(VolleyError error) {
 
             }
-        }, 0, 0, false, true);
+        }, 0, 0, false, true, 0);
+    }
+
+    /**
+     * get Image for background caching
+     * @param requestUrl
+     * @param ttl allow a custom ttl for caching
+     * @return
+     */
+    public ImageContainer getImageBackground(String requestUrl, long ttl) {
+        return get(requestUrl, new ImageListener() {
+            @Override
+            public void onResponse(ImageContainer response, boolean isImmediate) {
+
+            }
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }, 0, 0, false, true, ttl);
     }
 
     /**
@@ -204,7 +224,7 @@ public class ImageLoader {
 
     public ImageContainer get(String requestUrl, ImageListener imageListener,
                               int maxWidth, int maxHeight, boolean doubleRespond) {
-        return get(requestUrl, imageListener, maxWidth, maxHeight, doubleRespond, false);
+        return get(requestUrl, imageListener, maxWidth, maxHeight, doubleRespond, false, 0);
     }
 
     /**
@@ -220,8 +240,8 @@ public class ImageLoader {
      * @return A container object that contains all of the properties of the request, as well as
      *     the currently available image (default if remote is not loaded).
      */
-    public ImageContainer get(String requestUrl, ImageListener imageListener,
-            int maxWidth, int maxHeight, boolean doubleRespond, boolean backgroundFetch) {
+    private ImageContainer get(String requestUrl, ImageListener imageListener,
+            int maxWidth, int maxHeight, boolean doubleRespond, boolean backgroundFetch, long ttl) {
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
         // Try to look up the request in the cache of remote images.
@@ -261,7 +281,7 @@ public class ImageLoader {
 
         // The request is not already in flight. Send the new request to the network and
         // track it.
-        Request<?> newRequest =
+        ImageRequest newRequest =
             new ImageRequest(mContext, requestUrl, mCache, new Listener<CacheableBitmapDrawable>() {
                 @Override
                 public void onResponse(CacheableBitmapDrawable response) {
@@ -274,6 +294,7 @@ public class ImageLoader {
                     onGetImageError(cacheKey, error);
                 }
             });
+        newRequest.setTtl(ttl);
 
         mRequestQueue.add(newRequest);
         mInFlightRequests.put(cacheKey,
