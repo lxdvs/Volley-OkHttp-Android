@@ -56,7 +56,6 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
     private Context mContext;
 
     private ImageLoader.ImageCache mCache;
-    private int TTL;
     private long mTtl = 0;
 
     /**
@@ -155,8 +154,6 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
             }
         }
     }
-
-
 
     @Override
     protected boolean isMarkerLogEnabled() {

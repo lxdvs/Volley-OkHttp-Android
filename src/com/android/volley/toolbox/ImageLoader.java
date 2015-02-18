@@ -170,17 +170,7 @@ public class ImageLoader {
      * @return
      */
     public ImageContainer getImageBackground(String requestUrl) {
-        return get(requestUrl, new ImageListener() {
-            @Override
-            public void onResponse(ImageContainer response, boolean isImmediate) {
-
-            }
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-            }
-        }, 0, 0, false, true, 0);
+        return getImageBackground(requestUrl, 0);
     }
 
     /**
