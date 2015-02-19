@@ -127,6 +127,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /** Whether or not responses to this request should be cached. */
     private boolean mShouldCache = true;
 
+    /** should offline cache this or not */
+    private boolean mOfflineCache = false;
+
     /** Whether or not this request has been canceled. */
     private boolean mCanceled = false;
 
@@ -718,6 +721,15 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     public boolean shouldCacheInstantly() {
         return true;
+    }
+
+    public boolean isOfflineCache() {
+        return mOfflineCache;
+    }
+
+    public Request<?> setOfflineCache(boolean offline) {
+        mOfflineCache = offline;
+        return this;
     }
 
     public void onParseOOM(OutOfMemoryError e) {

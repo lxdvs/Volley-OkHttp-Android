@@ -51,7 +51,7 @@ public class DiskBasedCache implements Cache {
     /** Map of the Key, CacheHeader pairs */
     private final Map<String, CacheHeader> mEntries =
             new LinkedHashMap<String, CacheHeader>(16, .75f, true);
-    private final CacheWriteHandlerThread mCacheWriteHanderThread;
+    private CacheWriteHandlerThread mCacheWriteHanderThread;
 
     /** Total amount of space currently used by the cache in bytes. */
     private long mTotalSize = 0;
@@ -69,7 +69,7 @@ public class DiskBasedCache implements Cache {
     private static final float HYSTERESIS_FACTOR = 0.9f;
 
     /** Magic number for current version of cache file format. */
-    private static final int CACHE_MAGIC = 0x20140623;
+    private static final int CACHE_MAGIC = 0x20150218;
 
     private ConcurrentHashMap<String, Entry> mMemoryMap = new ConcurrentHashMap<String, Entry>(16, 0.75f);
 
@@ -81,7 +81,6 @@ public class DiskBasedCache implements Cache {
     public DiskBasedCache(File rootDirectory, long maxCacheSizeInBytes) {
         mRootDirectory = rootDirectory;
         mMaxCacheSizeInBytes = maxCacheSizeInBytes;
-        mCacheWriteHanderThread = new CacheWriteHandlerThread();
     }
 
     /**
@@ -169,6 +168,8 @@ public class DiskBasedCache implements Cache {
      */
     @Override
     public synchronized void initialize() {
+        mCacheWriteHanderThread = new CacheWriteHandlerThread();
+
         if (!mRootDirectory.exists()) {
             if (!mRootDirectory.mkdirs()) {
                 VolleyLog.e("Unable to create cache dir %s", mRootDirectory.getAbsolutePath());
@@ -230,7 +231,7 @@ public class DiskBasedCache implements Cache {
             return;
         }
 
-        pruneIfNeeded(entry.data.length, true);
+        pruneIfNeeded(entry.data.length);
         File file = getFileForKey(key);
         try {
             FileOutputStream fos = new FileOutputStream(file);
@@ -305,11 +306,18 @@ public class DiskBasedCache implements Cache {
         return new File(mRootDirectory, getFilenameForKey(key));
     }
 
+    private enum PruneState {
+        EXPIRED,
+        IMAGES,
+        EVICTABLE,
+        ALL
+    }
+
     /**
      * Prunes the cache to fit the amount of bytes specified.
      * @param neededSpace The amount of bytes we are trying to fit into the cache.
      */
-    private synchronized void pruneIfNeeded(int neededSpace, boolean preferImagePruning) {
+    private synchronized void pruneIfNeeded(int neededSpace) {
         if ((mTotalSize + neededSpace) < mMaxCacheSizeInBytes) {
             return;
         }
@@ -321,37 +329,81 @@ public class DiskBasedCache implements Cache {
         int prunedFiles = 0;
         long startTime = SystemClock.elapsedRealtime();
 
-        Iterator<Map.Entry<String, CacheHeader>> iterator = mEntries.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, CacheHeader> entry = iterator.next();
-            CacheHeader e = entry.getValue();
-            if (e.ttl == Long.MAX_VALUE || (preferImagePruning && !e.isImage)) {
-                continue;
-            }
-            boolean deleted = getFileForKey(e.key).delete();
-            if (deleted) {
-                mTotalSize -= e.size;
-            } else {
-                VolleyLog.d("Could not delete cache entry for key=%s, filename=%s",
-                        e.key, getFilenameForKey(e.key));
-            }
-            iterator.remove();
-            prunedFiles++;
-
-            if ((mTotalSize + neededSpace) < mMaxCacheSizeInBytes * HYSTERESIS_FACTOR) {
+        for (PruneState state : PruneState.values()) {
+            prunedFiles += pruneItems(neededSpace, state);
+            if (isFinishedPruning(neededSpace)) {
                 break;
             }
-        }
-
-        // we weren't able to remove enough images to find space
-        if (mTotalSize + neededSpace >= mMaxCacheSizeInBytes * HYSTERESIS_FACTOR && preferImagePruning) {
-            pruneIfNeeded(neededSpace, false);
         }
 
         if (VolleyLog.DEBUG) {
             VolleyLog.v("pruned %d files, %d bytes, %d ms",
                     prunedFiles, (mTotalSize - before), SystemClock.elapsedRealtime() - startTime);
         }
+    }
+
+    private int pruneItems(int neededSpace, PruneState state) {
+        int prunedFiles = 0;
+        Iterator<Map.Entry<String, CacheHeader>> iterator = mEntries.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, CacheHeader> entry = iterator.next();
+            CacheHeader e = entry.getValue();
+            boolean deleted = false;
+
+            // delete expired things
+            if (state == PruneState.EXPIRED && e.isExpired()) {
+                deleted = getFileForKey(e.key).delete();
+                if (!deleted) {
+                    VolleyLog.d("Could not delete cache entry for key=%s, filename=%s",
+                            e.key, getFilenameForKey(e.key));
+                }
+            }
+
+            // prune images
+            if (state == PruneState.IMAGES && e.isImage && e.canEvict()) {
+                deleted = getFileForKey(e.key).delete();
+                if (!deleted) {
+                    VolleyLog.d("Could not delete cache entry for key=%s, filename=%s",
+                            e.key, getFilenameForKey(e.key));
+                }
+            }
+
+            // prune evictable
+            if (state == PruneState.EVICTABLE && e.canEvict()) {
+                deleted = getFileForKey(e.key).delete();
+                if (!deleted) {
+                    VolleyLog.d("Could not delete cache entry for key=%s, filename=%s",
+                            e.key, getFilenameForKey(e.key));
+                }
+            }
+
+            // prune anything
+            if (state == PruneState.ALL) {
+                deleted = getFileForKey(e.key).delete();
+                if (!deleted) {
+                    VolleyLog.d("Could not delete cache entry for key=%s, filename=%s",
+                            e.key, getFilenameForKey(e.key));
+                }
+            }
+
+            // remove from iterator
+            if (deleted) {
+                mTotalSize -= e.size;
+                iterator.remove();
+                prunedFiles++;
+            }
+
+            // quit early if finished
+            if (isFinishedPruning(neededSpace)) {
+                break;
+            }
+        }
+
+        return prunedFiles;
+    }
+
+    private boolean isFinishedPruning(int neededSpace) {
+        return (mTotalSize + neededSpace) < mMaxCacheSizeInBytes * HYSTERESIS_FACTOR;
     }
 
     /**
@@ -424,10 +476,21 @@ public class DiskBasedCache implements Cache {
         /** Soft TTL for this record. */
         public long softTtl;
 
+        /** force keep this record until */
+        public long keepUntil;
+
         /** Headers from the response resulting in this cache entry. */
         public Map<String, String> responseHeaders;
 
         private CacheHeader() { }
+
+        protected boolean isExpired() {
+            return ttl < System.currentTimeMillis();
+        }
+
+        protected boolean canEvict() {
+            return keepUntil < System.currentTimeMillis();
+        }
 
         /**
          * Instantiates a new CacheHeader object
@@ -441,6 +504,7 @@ public class DiskBasedCache implements Cache {
             this.serverDate = entry.serverDate;
             this.ttl = entry.ttl;
             this.softTtl = entry.softTtl;
+            this.keepUntil = entry.keepUntil;
             this.isImage = entry.isImage;
             this.responseHeaders = entry.responseHeaders;
         }
@@ -466,6 +530,8 @@ public class DiskBasedCache implements Cache {
             entry.serverDate = readLong(is);
             entry.ttl = readLong(is);
             entry.softTtl = readLong(is);
+            entry.keepUntil = readLong(is);
+            entry.isImage = readInt(is) > 0;
 
             // prune entries that are permacached
             if (entry.ttl == Long.MAX_VALUE || entry.softTtl == Long.MAX_VALUE) {
@@ -491,6 +557,8 @@ public class DiskBasedCache implements Cache {
             e.serverDate = serverDate;
             e.ttl = ttl;
             e.softTtl = softTtl;
+            e.keepUntil = keepUntil;
+            e.isImage = isImage;
             e.responseHeaders = responseHeaders;
 
             e.responseHeaders.put(Entry.KEY_CACHED_TTL, String.valueOf(e.ttl));
@@ -509,6 +577,8 @@ public class DiskBasedCache implements Cache {
                 writeLong(os, serverDate);
                 writeLong(os, ttl);
                 writeLong(os, softTtl);
+                writeLong(os, keepUntil);
+                writeInt(os, isImage ? 1 : 0);
                 writeStringStringMap(responseHeaders, os);
                 os.flush();
                 return true;

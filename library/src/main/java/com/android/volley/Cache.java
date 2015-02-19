@@ -103,6 +103,9 @@ public interface Cache {
         /** Soft TTL for this record. */
         public long softTtl;
 
+        /** keep until for offline mode */
+        public long keepUntil;
+
         /** Immutable response headers as received from server; must be non-null. */
         public Map<String, String> responseHeaders = new HashMap<>();
 
