@@ -20,6 +20,7 @@ import android.content.Context;
 
 import com.android.volley.Network;
 import com.android.volley.RequestQueue;
+import com.squareup.okhttp.OkHttpClient;
 
 import java.io.File;
 
@@ -27,6 +28,14 @@ public class Volley {
 
     /** Default on-disk cache directory. */
     private static final String DEFAULT_CACHE_DIR = "volley";
+
+    public static RequestQueue newRequestQueue(Context context) {
+        return newRequestQueue(context, new OkHttpClient());
+    }
+
+    public static RequestQueue newRequestQueue(Context context, OkHttpClient okHttpClient) {
+        return newRequestQueue(context, new OkHttpHurlStack(okHttpClient));
+    }
 
     /**
      * Creates a default instance of the worker pool and calls {@link RequestQueue#start()} on it.
@@ -37,26 +46,9 @@ public class Volley {
      */
     public static RequestQueue newRequestQueue(Context context, HttpStack stack) {
         File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
-
-        if (stack == null) {
-            stack = new OkHttpStack();
-        }
-
-        Network network = new BasicNetwork(stack);
-
-        RequestQueue queue = new RequestQueue(new DiskBasedCache(cacheDir), network);
+        RequestQueue queue = new RequestQueue(new DiskBasedCache(cacheDir), new BasicNetwork(stack));
         queue.start();
 
         return queue;
-    }
-
-    /**
-     * Creates a default instance of the worker pool and calls {@link RequestQueue#start()} on it.
-     *
-     * @param context A {@link Context} to use for creating the cache dir.
-     * @return A started {@link RequestQueue} instance.
-     */
-    public static RequestQueue newRequestQueue(Context context) {
-        return newRequestQueue(context, null);
     }
 }

@@ -10,14 +10,14 @@ import java.net.URL;
 /**
  * An {@link com.android.volley.toolbox.HttpStack HttpStack} implementation which uses OkHttp as its transport.
  */
-public class OkHttpStack extends HurlStack {
+public class OkHttpHurlStack extends HurlStack {
     private final OkHttpClient client;
 
-    public OkHttpStack() {
+    public OkHttpHurlStack() {
         this(new OkHttpClient());
     }
 
-    public OkHttpStack(OkHttpClient client) {
+    public OkHttpHurlStack(OkHttpClient client) {
         if (client == null) {
             throw new NullPointerException("Client must not be null.");
         }
