@@ -51,8 +51,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @param <T> The type of parsed response this future expects.
  */
-public class RequestFuture<T> implements Future<T>, Response.Listener<T>,
-       Response.ErrorListener {
+public class RequestFuture<T> implements Future<T>, RequestListener<T> {
     private Request<?> mRequest;
     private boolean mResultReceived = false;
     private T mResult;
