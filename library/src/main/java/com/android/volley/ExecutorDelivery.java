@@ -16,12 +16,12 @@
 
 package com.android.volley;
 
-import java.util.concurrent.Executor;
-
 import android.os.Handler;
 import android.text.TextUtils;
 
 import com.android.volley.Request.ReturnStrategy;
+
+import java.util.concurrent.Executor;
 
 /**
  * Delivers responses and errors.
@@ -101,6 +101,11 @@ public class ExecutorDelivery implements ResponseDelivery {
             // If this request has canceled, finish it and don't deliver.
             if (mRequest.isCanceled()) {
                 mRequest.finish("canceled-at-delivery");
+                return;
+            }
+
+            if (!mRequest.isExecuting() || mRequest.isFinished()) {
+                mRequest.finish("request-already-finished");
                 return;
             }
 
