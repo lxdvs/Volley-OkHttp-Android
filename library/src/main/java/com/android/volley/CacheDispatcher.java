@@ -137,6 +137,7 @@ public class CacheDispatcher extends Thread {
 
                 if (!entry.refreshNeeded()) {
                     // Completely unexpired cache hit. Just deliver the response.
+                    request.markDelivery(Request.DeliveryType.Cache);
                     mDelivery.postResponse(request, response);
                 } else if (request.getReturnStrategy() == Request.ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
                     // if CACHE_IF_NETWORK_FAILS prep cache response and send to network
@@ -159,6 +160,7 @@ public class CacheDispatcher extends Thread {
 
                     // Post the intermediate response back to the user and have
                     // the delivery then forward the request along to the network if allowed
+                    request.markDelivery(Request.DeliveryType.Cache);
                     mDelivery.postResponse(request, response, cacheOnlyRequest ? null : new Runnable() {
                         @Override
                         public void run() {

@@ -60,7 +60,6 @@ public class ExecutorDelivery implements ResponseDelivery {
 
     @Override
     public void postResponse(Request<?> request, Response<?> response, Runnable runnable) {
-        request.markDelivered();
         request.addMarker("post-response");
         mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, runnable));
     }
@@ -70,9 +69,11 @@ public class ExecutorDelivery implements ResponseDelivery {
         String errStr = error == null || error.networkResponse == null || TextUtils.isEmpty(error.networkResponse.errorResponseString) ?
                 "<unparsed>" : error.networkResponse.errorResponseString;
         if (request.getReturnStrategy() == ReturnStrategy.CACHE_IF_NETWORK_FAILS && request.mCacheResponse != null) {
+            request.markDelivery(Request.DeliveryType.Cache);
             request.addMarker("post-cached-on-error: " + errStr);
             postResponse(request, request.mCacheResponse, null);
         } else {
+            request.markDelivery(Request.DeliveryType.Error);
             request.addMarker("post-error: " + errStr);
             Response<?> response = Response.error(error);
             mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, null));

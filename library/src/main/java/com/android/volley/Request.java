@@ -70,6 +70,10 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         int PATCH = 7;
     }
 
+    public enum DeliveryType {
+        None, Cache, Network, Error;
+    }
+
     /**
      * Supported request methods.
      */
@@ -91,6 +95,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     protected ReturnStrategy mReturnStrategy = ReturnStrategy.DOUBLE;
 
+    private DeliveryType mResponseDelivery = DeliveryType.None;
+
     /** URL of this request. */
     private final String mUrl;
 
@@ -111,9 +117,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /** Whether or not this request has been canceled. */
     private boolean mCanceled = false;
-
-    /** Whether or not a response has been delivered for this request yet. */
-    private boolean mResponseDelivered = false;
 
     // A cheap variant of request tracing used to dump slow requests.
     private long mRequestBirthTime = 0;
@@ -583,8 +586,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * Mark this request as having a response delivered on it.  This can be used
      * later in the request's lifetime for suppressing identical responses.
      */
-    public void markDelivered() {
-        mResponseDelivered = true;
+    public void markDelivery(DeliveryType type) {
+        mResponseDelivery = type;
     }
 
     public Response<?> mCacheResponse;
@@ -593,7 +596,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * Returns true if this request has had a response delivered for it.
      */
     public boolean hasHadResponseDelivered() {
-        return mResponseDelivered;
+        return mResponseDelivery == DeliveryType.Cache || mResponseDelivery == DeliveryType.Network;
+    }
+
+    public DeliveryType getDeliveryType() {
+        return mResponseDelivery;
     }
 
     /**
