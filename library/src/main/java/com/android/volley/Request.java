@@ -253,6 +253,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * <p>Also dumps all events from this request's event log; for debugging.</p>
      */
     void finish(final String tag) {
+        setFinished(true);
         if (mRequestQueue != null) {
             mRequestQueue.finish(this);
         }
@@ -703,10 +704,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     public void expireCache() {
         // no - op
-    }
-
-    public boolean isExecuting() {
-        return mRequestQueue.isProcessing(this);
     }
 
     public void setFinished(boolean finished) {

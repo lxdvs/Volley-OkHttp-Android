@@ -318,7 +318,6 @@ public class RequestQueue {
         // Remove from the set of requests currently being processed.
         synchronized (mCurrentRequests) {
             mCurrentRequests.remove(request);
-            request.setFinished(true);
         }
 
         if (request.shouldCache()) {

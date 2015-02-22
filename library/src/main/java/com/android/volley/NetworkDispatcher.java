@@ -111,7 +111,7 @@ public class NetworkDispatcher extends Thread {
                     continue;
                 }
 
-                if (!request.isExecuting() || request.isFinished()) {
+                if (request.isFinished()) {
                     request.finish("network-request-already-finished");
                     return;
                 }

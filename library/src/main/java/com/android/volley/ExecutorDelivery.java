@@ -104,13 +104,14 @@ public class ExecutorDelivery implements ResponseDelivery {
                 return;
             }
 
-            if (!mRequest.isExecuting() || mRequest.isFinished()) {
+            if (mRequest.isFinished()) {
                 mRequest.finish("request-already-finished");
                 return;
             }
 
             // Deliver a normal response or error, depending.
             if (mResponse.isSuccess()) {
+                // todo set finished before delivery
                 mRequest.deliverResponse(mResponse.result);
             } else if (mRequest.getReturnStrategy() == ReturnStrategy.CACHE_IF_NETWORK_FAILS && mRequest.mCacheResponse != null) {
                 mRequest.finish("got an error but delivered intermediate response");
