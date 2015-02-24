@@ -96,12 +96,17 @@ public class CacheDispatcher extends Thread {
                     continue;
                 }
 
-                // Attempt to retrieve this item from cache.
-                Cache.Entry entry = mCache.get(request.getCacheKey());
+                if (request.isFinished()) {
+                    request.finish("cache-request-already-finished");
+                    return;
+                }
 
                 // should the request be cache only.
                 // if this is true it will never be sent to network.
                 boolean cacheOnlyRequest = request.isJoined();
+
+                // Attempt to retrieve this item from cache.
+                Cache.Entry entry = mCache.get(request.getCacheKey());
 
                 // if the entry doesn't exist then it is not in the cache
                 if (entry == null) {

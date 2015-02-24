@@ -51,6 +51,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     private boolean mJoined;
 
     /**
+     * Identifies if the request is finished
+     */
+    private boolean mFinished;
+
+    /**
      * Supported request methods.
      */
     public interface Method {
@@ -248,6 +253,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * <p>Also dumps all events from this request's event log; for debugging.</p>
      */
     void finish(final String tag) {
+        setFinished(true);
         if (mRequestQueue != null) {
             mRequestQueue.finish(this);
         }
@@ -699,4 +705,13 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public void expireCache() {
         // no - op
     }
+
+    public void setFinished(boolean finished) {
+        mFinished = finished;
+    }
+
+    public boolean isFinished() {
+        return mFinished;
+    }
+
 }

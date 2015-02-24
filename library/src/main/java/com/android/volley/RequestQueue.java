@@ -337,6 +337,7 @@ public class RequestQueue {
                     for (Request queuedRequest : waitingRequests) {
                         queuedRequest.setJoined(false);
                     }
+
                     // Process all queued up requests. They won't be considered as in flight, but
                     // that's not a problem as the cache has been primed by 'request'.
                     mCacheQueue.addAll(waitingRequests);

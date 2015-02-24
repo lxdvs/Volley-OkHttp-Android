@@ -111,6 +111,11 @@ public class NetworkDispatcher extends Thread {
                     continue;
                 }
 
+                if (request.isFinished()) {
+                    request.finish("network-request-already-finished");
+                    return;
+                }
+
                 addTrafficStatsTag(request);
 
                 // Perform the network request.

@@ -16,12 +16,12 @@
 
 package com.android.volley;
 
-import java.util.concurrent.Executor;
-
 import android.os.Handler;
 import android.text.TextUtils;
 
 import com.android.volley.Request.ReturnStrategy;
+
+import java.util.concurrent.Executor;
 
 /**
  * Delivers responses and errors.
@@ -104,8 +104,14 @@ public class ExecutorDelivery implements ResponseDelivery {
                 return;
             }
 
+            if (mRequest.isFinished()) {
+                mRequest.finish("request-already-finished");
+                return;
+            }
+
             // Deliver a normal response or error, depending.
             if (mResponse.isSuccess()) {
+                // todo set finished before delivery
                 mRequest.deliverResponse(mResponse.result);
             } else if (mRequest.getReturnStrategy() == ReturnStrategy.CACHE_IF_NETWORK_FAILS && mRequest.mCacheResponse != null) {
                 mRequest.finish("got an error but delivered intermediate response");
