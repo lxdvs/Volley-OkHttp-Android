@@ -263,11 +263,14 @@ public class DiskBasedCache implements Cache {
         mCacheWriteHanderThread.updateEntryAsync(cacheKey, entry);
     }
 
-    private void updateEntrySynchronous(String key, Entry entry) {
+    private synchronized void updateEntrySynchronous(String key, Entry entry) {
         Entry cachedEntry = get(key);
-        entry.data = cachedEntry.data;
-        entry.responseHeaders = cachedEntry.responseHeaders;
-        put(key, entry, true);
+        // if null. entry has been pruned. 
+        if (cachedEntry != null) {
+            entry.data = cachedEntry.data;
+            entry.responseHeaders = cachedEntry.responseHeaders;
+            put(key, entry, true);
+        }
     }
 
     /**
