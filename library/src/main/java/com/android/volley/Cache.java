@@ -16,6 +16,10 @@
 
 package com.android.volley;
 
+import com.android.volley.toolbox.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
 
@@ -83,7 +87,9 @@ public interface Cache {
      */
     public static class Entry {
         /** The data returned from cache. */
-        public byte[] data;
+        private byte[] data;
+
+        private InputStream inputStream;
 
         /** Is cache item an image */
         public boolean isImage;
@@ -123,6 +129,33 @@ public interface Cache {
         // this will force the cache to be expired
         public void expireCache() {
             setTTL(0);
+        }
+
+        public byte[] getData() {
+            if (inputStream != null && data == null) {
+                try {
+                    data = IOUtils.byteArrayFromInputStream(inputStream);
+                } catch (IOException e) {
+                    // no - op
+                } finally {
+                    if (inputStream != null) {
+                        try {
+                            inputStream.close();
+                        } catch (IOException ioe) {
+                        }
+                    }
+                    inputStream = null;
+                }
+            }
+            return data;
+        }
+
+        public InputStream getInputStream() {
+            return inputStream;
+        }
+
+        public void setInputStream(InputStream inputStream) {
+            this.inputStream = inputStream;
         }
     }
 

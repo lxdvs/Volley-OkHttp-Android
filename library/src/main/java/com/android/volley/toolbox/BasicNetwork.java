@@ -113,7 +113,7 @@ public class BasicNetwork implements Network {
                     // the new ones from the response.
                     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.5
                     entry.responseHeaders.putAll(responseHeaders);
-                    return new NetworkResponse(HttpStatus.SC_NOT_MODIFIED, entry.data,
+                    return new NetworkResponse(HttpStatus.SC_NOT_MODIFIED, entry.getData(),
                             entry.responseHeaders, true,
                             SystemClock.elapsedRealtime() - requestStart);
                 }

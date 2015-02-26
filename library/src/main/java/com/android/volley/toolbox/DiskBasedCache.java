@@ -125,7 +125,6 @@ public class DiskBasedCache implements Cache {
     /**
      * Returns the cache entry with the specified key if it exists, null otherwise.
      */
-    @Override
     public synchronized Entry get(String key) {
         Entry memoryEntry = mMemoryMap.get(key);
         if (memoryEntry != null) {
@@ -141,18 +140,13 @@ public class DiskBasedCache implements Cache {
         File file = getFileForKey(key);
         CountingInputStream cis = null;
         try {
-            cis = new CountingInputStream(new FileInputStream(file));
+            cis = new CountingInputStream(new BufferedInputStream(new FileInputStream(file)));
             CacheHeader fullCacheHeader = CacheHeader.readHeader(cis, true);
-            byte[] data = streamToBytes(cis, (int) (file.length() - cis.bytesRead));
-            return fullCacheHeader.toCacheEntry(data);
+            return fullCacheHeader.toCacheEntry(cis);
         } catch (IOException e) {
             VolleyLog.d("%s: %s", file.getAbsolutePath(), e.toString());
             remove(key);
-            return null;
-        } catch (OutOfMemoryError e) {
-            VolleyLog.d("OOM: %s: %s", file.getAbsolutePath(), e.toString());
-            return null;
-        } finally {
+
             if (cis != null) {
                 try {
                     cis.close();
@@ -160,6 +154,18 @@ public class DiskBasedCache implements Cache {
                     return null;
                 }
             }
+            return null;
+        } catch (OutOfMemoryError e) {
+            VolleyLog.d("OOM: %s: %s", file.getAbsolutePath(), e.toString());
+
+            if (cis != null) {
+                try {
+                    cis.close();
+                } catch (IOException ioe) {
+                    return null;
+                }
+            }
+            return null;
         }
     }
 
@@ -230,7 +236,7 @@ public class DiskBasedCache implements Cache {
             return;
         }
 
-        pruneIfNeeded(entry.data.length, true);
+        pruneIfNeeded(entry.getData().length, true);
         File file = getFileForKey(key);
         try {
             FileOutputStream fos = new FileOutputStream(file);
@@ -241,7 +247,7 @@ public class DiskBasedCache implements Cache {
                 VolleyLog.d("Failed to write header for %s", file.getAbsolutePath());
                 throw new IOException();
             }
-            fos.write(entry.data);
+            fos.write(entry.getData());
             fos.close();
             if (e.responseHeaders != null) {
                 e.responseHeaders.clear();
@@ -265,9 +271,9 @@ public class DiskBasedCache implements Cache {
 
     private synchronized void updateEntrySynchronous(String key, Entry entry) {
         Entry cachedEntry = get(key);
-        // if null. entry has been pruned. 
+        // if null. entry has been pruned.
         if (cachedEntry != null) {
-            entry.data = cachedEntry.data;
+            entry.setInputStream(cachedEntry.getInputStream());
             entry.responseHeaders = cachedEntry.responseHeaders;
             put(key, entry, true);
         }
@@ -436,7 +442,7 @@ public class DiskBasedCache implements Cache {
          */
         public CacheHeader(String key, Entry entry) {
             this.key = key;
-            this.size = entry.data.length;
+            this.size = entry.getData().length;
             this.etag = entry.etag;
             this.serverDate = entry.serverDate;
             this.ttl = entry.ttl;
@@ -476,18 +482,15 @@ public class DiskBasedCache implements Cache {
             return entry;
         }
 
-        /**
-         * Creates a cache entry for the specified data.
-         */
-        public Entry toCacheEntry(byte[] data) {
-            Entry e = new Entry();
-            e.data = data;
-            e.etag = etag;
-            e.serverDate = serverDate;
-            e.ttl = ttl;
-            e.softTtl = softTtl;
-            e.responseHeaders = responseHeaders;
-            return e;
+        public Entry toCacheEntry(InputStream inputStream) {
+            Entry entry = new Entry();
+            entry.setInputStream(inputStream);
+            entry.etag = etag;
+            entry.serverDate = serverDate;
+            entry.ttl = ttl;
+            entry.softTtl = softTtl;
+            entry.responseHeaders = responseHeaders;
+            return entry;
         }
 
         /**
