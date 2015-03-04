@@ -73,7 +73,6 @@ public class ExecutorDelivery implements ResponseDelivery {
             request.addMarker("post-cached-on-error: " + errStr);
             postResponse(request, request.mCacheResponse, null);
         } else {
-            request.markDelivery(Request.DeliveryType.Error);
             request.addMarker("post-error: " + errStr);
             Response<?> response = Response.error(error);
             mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, null));

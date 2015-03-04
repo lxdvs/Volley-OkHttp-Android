@@ -71,7 +71,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     public enum DeliveryType {
-        None, Cache, Network, Error;
+        None, Cache, Network
     }
 
     /**
@@ -95,6 +95,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     protected ReturnStrategy mReturnStrategy = ReturnStrategy.DOUBLE;
 
+    /**
+     * Track if a response has been delivered, as well as the type (cache or network) of the most recent response.
+     * Only the most recent delivery type is remembered, so if a cache and network response are both delivered
+     * this will be the second response type.
+     */
     private DeliveryType mResponseDelivery = DeliveryType.None;
 
     /** URL of this request. */
@@ -583,8 +588,10 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
-     * Mark this request as having a response delivered on it.  This can be used
-     * later in the request's lifetime for suppressing identical responses.
+     * Mark this request as having a response delivered on it, as well as the type of response.  This can be used
+     * later in the request's lifetime for suppressing identical responses and identifying whether the response
+     * came from cache or network. This will be set immediately before {@link #deliverResponse(Object)} is called
+     * so the {@link com.android.volley.Request.DeliveryType} can be checked at the time of delivery.
      */
     public void markDelivery(DeliveryType type) {
         mResponseDelivery = type;
@@ -592,13 +599,18 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     public Response<?> mCacheResponse;
 
-    /**
-     * Returns true if this request has had a response delivered for it.
+    /**t
+     * Returns true if this request has had either a cache or network response delivered for it.
      */
     public boolean hasHadResponseDelivered() {
-        return mResponseDelivery == DeliveryType.Cache || mResponseDelivery == DeliveryType.Network;
+        return mResponseDelivery != DeliveryType.None;
     }
 
+    /**
+     * If {@link #hasHadResponseDelivered()} is true this will return the most recent type of response delivered,
+     * otherwise this will return {@link com.android.volley.Request.DeliveryType#None}.
+     * @return
+     */
     public DeliveryType getDeliveryType() {
         return mResponseDelivery;
     }
