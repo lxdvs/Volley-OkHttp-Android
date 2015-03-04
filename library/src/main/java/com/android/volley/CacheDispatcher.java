@@ -140,6 +140,7 @@ public class CacheDispatcher extends Thread {
                         // caching 50% over so lets warm the cache
                         // Post the intermediate response back to the user and have
                         // the delivery then forward the request along to the network.
+                        request.markDelivery(Request.DeliveryType.Cache);
                         mDelivery.postResponse(request, response, new Runnable() {
                             @Override
                             public void run() {
