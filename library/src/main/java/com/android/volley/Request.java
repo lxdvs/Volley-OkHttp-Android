@@ -70,8 +70,14 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         int PATCH = 7;
     }
 
+    /** Track the type of response being delivered. */
     public enum DeliveryType {
-        None, Cache, Network
+        /** No responses have been delivered so far */
+        None,
+        /** A cache response was delivered. */
+        Cache,
+        /** A network response was delivered. */
+        Network
     }
 
     /**
@@ -603,7 +609,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * Returns true if this request has had either a cache or network response delivered for it.
      */
     public boolean hasHadResponseDelivered() {
-        return mResponseDelivery != DeliveryType.None;
+        return mResponseDelivery == DeliveryType.Network || mResponseDelivery == DeliveryType.Cache;
     }
 
     /**
