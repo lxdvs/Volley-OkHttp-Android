@@ -70,6 +70,16 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         int PATCH = 7;
     }
 
+    /** Track the type of response being delivered. */
+    public enum DeliveryType {
+        /** No responses have been delivered so far */
+        None,
+        /** A cache response was delivered. */
+        Cache,
+        /** A network response was delivered. */
+        Network
+    }
+
     /**
      * Supported request methods.
      */
@@ -91,6 +101,13 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     protected ReturnStrategy mReturnStrategy = ReturnStrategy.DOUBLE;
 
+    /**
+     * Track if a response has been delivered, as well as the type (cache or network) of the most recent response.
+     * Only the most recent delivery type is remembered, so if a cache and network response are both delivered
+     * this will be the second response type.
+     */
+    private DeliveryType mResponseDelivery = DeliveryType.None;
+
     /** URL of this request. */
     private final String mUrl;
 
@@ -98,7 +115,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     private final int mDefaultTrafficStatsTag;
 
     /** Listener interface for errors. */
-    private final Response.ErrorListener mErrorListener;
+    private Response.ErrorListener mErrorListener;
 
     /** Sequence number of this request, used to enforce FIFO ordering. */
     private Integer mSequence;
@@ -111,9 +128,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /** Whether or not this request has been canceled. */
     private boolean mCanceled = false;
-
-    /** Whether or not a response has been delivered for this request yet. */
-    private boolean mResponseDelivered = false;
 
     // A cheap variant of request tracing used to dump slow requests.
     private long mRequestBirthTime = 0;
@@ -197,6 +211,10 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public Response.ErrorListener getErrorListener() {
         return mErrorListener;
+    }
+
+    public void setErrorListener(Response.ErrorListener errorListener) {
+        mErrorListener = errorListener;
     }
 
     /**
@@ -576,20 +594,31 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
-     * Mark this request as having a response delivered on it.  This can be used
-     * later in the request's lifetime for suppressing identical responses.
+     * Mark this request as having a response delivered on it, as well as the type of response.  This can be used
+     * later in the request's lifetime for suppressing identical responses and identifying whether the response
+     * came from cache or network. This will be set immediately before {@link #deliverResponse(Object)} is called
+     * so the {@link com.android.volley.Request.DeliveryType} can be checked at the time of delivery.
      */
-    public void markDelivered() {
-        mResponseDelivered = true;
+    public void markDelivery(DeliveryType type) {
+        mResponseDelivery = type;
     }
 
     public Response<?> mCacheResponse;
 
     /**
-     * Returns true if this request has had a response delivered for it.
+     * Returns true if this request has had either a cache or network response delivered for it.
      */
     public boolean hasHadResponseDelivered() {
-        return mResponseDelivered;
+        return mResponseDelivery == DeliveryType.Network || mResponseDelivery == DeliveryType.Cache;
+    }
+
+    /**
+     * If {@link #hasHadResponseDelivered()} is true this will return the most recent type of response delivered,
+     * otherwise this will return {@link com.android.volley.Request.DeliveryType#None}.
+     * @return
+     */
+    public DeliveryType getDeliveryType() {
+        return mResponseDelivery;
     }
 
     /**
