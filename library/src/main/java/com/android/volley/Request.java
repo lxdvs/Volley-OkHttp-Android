@@ -599,7 +599,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     public Response<?> mCacheResponse;
 
-    /**t
+    /**
      * Returns true if this request has had either a cache or network response delivered for it.
      */
     public boolean hasHadResponseDelivered() {
