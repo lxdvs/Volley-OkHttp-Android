@@ -487,6 +487,9 @@ public class DiskBasedCache implements Cache {
             e.ttl = ttl;
             e.softTtl = softTtl;
             e.responseHeaders = responseHeaders;
+
+            e.responseHeaders.put(Entry.KEY_CACHED_TTL, String.valueOf(e.ttl));
+            e.responseHeaders.put(Entry.KEY_CACHED_SOFTTTL, String.valueOf(e.softTtl));
             return e;
         }
 

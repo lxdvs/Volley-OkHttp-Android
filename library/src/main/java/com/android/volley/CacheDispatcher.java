@@ -32,6 +32,7 @@ import java.util.concurrent.BlockingQueue;
 public class CacheDispatcher extends Thread {
 
     private static final boolean DEBUG = VolleyLog.DEBUG;
+    private static final float CACHE_WARM_RATIO = 0.5f;
 
     /** The queue of requests coming in for triage. */
     private final BlockingQueue<Request<?>> mCacheQueue;
@@ -134,11 +135,22 @@ public class CacheDispatcher extends Thread {
                         new NetworkResponse(entry.data, entry.responseHeaders));
                 request.addMarker("cache-hit-parsed");
 
-
                 if (!entry.refreshNeeded()) {
-                    // Completely unexpired cache hit. Just deliver the response.
-                    request.markDelivery(Request.DeliveryType.Cache);
-                    mDelivery.postResponse(request, response);
+                    if (entry.softTtl - System.currentTimeMillis() < request.getSoftTTL() * CACHE_WARM_RATIO) {
+                        // caching 50% over so lets warm the cache
+                        // Post the intermediate response back to the user and have
+                        // the delivery then forward the request along to the network.
+                        mDelivery.postResponse(request, response, new Runnable() {
+                            @Override
+                            public void run() {
+                                mNetworkQueue.processNetworkRequest(request);
+                            }
+                        });
+                    } else {
+                        // Completely unexpired cache hit. Just deliver the response.
+                        request.markDelivery(Request.DeliveryType.Cache);
+                        mDelivery.postResponse(request, response);
+                    }
                 } else if (request.getReturnStrategy() == Request.ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
                     // if CACHE_IF_NETWORK_FAILS prep cache response and send to network
                     // this is a bit weird for a CACHE_IF_NETWORK_FAILS to be not allowed to go to
@@ -182,10 +194,23 @@ public class CacheDispatcher extends Thread {
         return entry == null || entry.isExpired();
     }
 
+    public boolean willSkipNetwork(Request request) {
+        Cache.Entry entry = mCache.getHeaders(request.getCacheKey());
+        return entry != null && !entry.refreshNeeded();
+    }
+
     public void expireCache(Request request) {
         Cache.Entry entry = mCache.getHeaders(request.getCacheKey());
         if (entry != null) {
             entry.expireCache();
+            mCache.updateEntry(request.getCacheKey(), entry);
+        }
+    }
+
+    public void expireSoftCache(Request request) {
+        Cache.Entry entry = mCache.getHeaders(request.getCacheKey());
+        if (entry != null) {
+            entry.expireSoftCache();
             mCache.updateEntry(request.getCacheKey(), entry);
         }
     }
