@@ -21,7 +21,6 @@ import android.os.Looper;
 import android.util.Pair;
 
 import com.android.volley.Request.Priority;
-import com.android.volley.Request.ReturnStrategy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -274,6 +273,12 @@ public class RequestQueue {
         request.setSequence(getSequenceNumber());
         request.addMarker("add-to-queue");
 
+        // If the request is uncacheable, skip the cache queue and go straight to the network.
+        if (request.getReturnStrategy() == Request.ReturnStrategy.NETWORK_ONLY) {
+            processNetworkRequest(request);
+            return request;
+        }
+
         // Insert request into stage if there's already a request with the same cache key in flight.
         synchronized (mWaitingRequests) {
             String cacheKey = request.getCacheKey();
@@ -295,16 +300,7 @@ public class RequestQueue {
                 mWaitingRequests.put(cacheKey, null);
             }
 
-            if (!request.isJoined()) {
-
-                // If the request is uncacheable, skip the cache queue and go straight to the network.
-                if (request.getReturnStrategy() == ReturnStrategy.NETWORK_ONLY) {
-                    processNetworkRequest(request);
-                    return request;
-                }
-
-                mCacheQueue.add(request);
-            }
+            mCacheQueue.add(request);
 
             return request;
         }
