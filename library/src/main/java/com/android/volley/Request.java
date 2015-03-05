@@ -759,6 +759,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * Milliseconds to be considered 'fresh' in cache
+     * This means that if the time is in the softttl time that the request can
+     * skip the network entirely and only cache respond
      *
      * @return
      */
