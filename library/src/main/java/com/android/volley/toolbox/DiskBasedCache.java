@@ -467,6 +467,11 @@ public class DiskBasedCache implements Cache {
             entry.ttl = readLong(is);
             entry.softTtl = readLong(is);
 
+            // prune entries that are permacached
+            if (entry.ttl == Long.MAX_VALUE || entry.softTtl == Long.MAX_VALUE) {
+                throw new IOException();
+            }
+
             if (includeResponseHeaders) {
                 entry.responseHeaders = readStringStringMap(is);
 
