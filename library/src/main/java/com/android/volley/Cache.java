@@ -16,7 +16,7 @@
 
 package com.android.volley;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -104,7 +104,7 @@ public interface Cache {
         public long softTtl;
 
         /** Immutable response headers as received from server; must be non-null. */
-        public Map<String, String> responseHeaders = Collections.emptyMap();
+        public Map<String, String> responseHeaders = new HashMap<>();
 
         /** True if the entry is expired. */
         public boolean isExpired() {
