@@ -759,6 +759,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * Milliseconds to be considered 'fresh' in cache
+     * This means that if the current time is less then softttl expire time, the request will
+     * skip the network entirely and only cache respond.
+     *
+     * from @Geobio
+     * If cached response is less than this many milliseconds, then the cached response is considered
+     * to be up-to-date. No network request will be sent, and the cached response will be returned.
      *
      * @return
      */
