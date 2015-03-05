@@ -141,8 +141,11 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
                     return Response.error(new ParseError(response));
                 } else {
                     Cache.Entry entry = HttpHeaderParser.parseCacheHeaders(response);
-                    if (entry != null) {
+                    if (entry != null && getTTL() > 0) {
                         entry.setTTL(System.currentTimeMillis() + getTTL());
+                        if (isOfflineCache()) {
+                            entry.keepUntil = entry.ttl;
+                        }
                     } else if (getTTL() != 0) {
                         Log.w(getClass().getSimpleName(), getClass().getSimpleName() + " has a TTL, but will not be cached due to network response's cache policy");
                     }
@@ -256,5 +259,6 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
 
     public void setTtl(long ttl) {
         mTtl = ttl;
+        setOfflineCache(ttl > 0);
     }
 }
