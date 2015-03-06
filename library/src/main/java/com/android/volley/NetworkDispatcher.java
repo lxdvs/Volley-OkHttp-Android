@@ -113,7 +113,7 @@ public class NetworkDispatcher extends Thread {
 
                 if (request.isFinished()) {
                     request.finish("network-request-already-finished");
-                    return;
+                    continue;
                 }
 
                 addTrafficStatsTag(request);
