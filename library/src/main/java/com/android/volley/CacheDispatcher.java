@@ -98,7 +98,7 @@ public class CacheDispatcher extends Thread {
 
                 if (request.isFinished()) {
                     request.finish("cache-request-already-finished");
-                    return;
+                    continue;
                 }
 
                 // should the request be cache only.
