@@ -33,7 +33,6 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -610,7 +609,7 @@ public class DiskBasedCache implements Cache {
         static Map<String, String> readStringStringMap(InputStream is) throws IOException {
             int size = readInt(is);
             Map<String, String> result = (size == 0)
-                    ? Collections.<String, String>emptyMap()
+                    ? new HashMap<String, String>()
                     : new HashMap<String, String>(size);
             for (int i = 0; i < size; i++) {
                 String key = readString(is).intern();
@@ -733,7 +732,7 @@ public class DiskBasedCache implements Cache {
     static Map<String, String> readStringStringMap(InputStream is) throws IOException {
         int size = readInt(is);
         Map<String, String> result = (size == 0)
-                ? Collections.<String, String>emptyMap()
+                ? new HashMap<String, String>()
                 : new HashMap<String, String>(size);
         for (int i = 0; i < size; i++) {
             String key = readString(is).intern();
