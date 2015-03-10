@@ -48,6 +48,7 @@ public class CacheDispatcher extends Thread {
 
     /** Used for telling us to die. */
     private volatile boolean mQuit = false;
+    private boolean mInitialized;
 
     /**
      * Creates a new cache triage dispatcher thread.  You must call {@link #start()}
@@ -65,6 +66,7 @@ public class CacheDispatcher extends Thread {
         mNetworkQueue = networkQueue;
         mCache = cache;
         mDelivery = delivery;
+        mInitialized = false;
     }
 
     /**
@@ -83,6 +85,7 @@ public class CacheDispatcher extends Thread {
 
         // Make a blocking call to initialize the cache.
         mCache.initialize();
+        mInitialized = true;
 
         while (true) {
             try {
@@ -189,13 +192,27 @@ public class CacheDispatcher extends Thread {
             }
         }
     }
-    
+
+    // these methods below can get called from the UI thread.
+
     public boolean willMissCache(Request request) {
+        // if not initialized return true. We don't know the state of the cache yet and waiting
+        // to find out will block the thread
+        if (!mInitialized) {
+            return true;
+        }
+
         Cache.Entry entry = mCache.getHeaders(request.getCacheKey());
         return entry == null || entry.isExpired();
     }
 
     public boolean willSkipNetwork(Request request) {
+        // if not initialized return true. We don't know the state of the cache yet and waiting
+        // to find out will block the thread
+        if (!mInitialized) {
+            return false;
+        }
+
         Cache.Entry entry = mCache.getHeaders(request.getCacheKey());
         return entry != null && !entry.refreshNeeded();
     }
