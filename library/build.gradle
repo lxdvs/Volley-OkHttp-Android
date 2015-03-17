@@ -3,10 +3,10 @@ apply from: 'gradle-maven-push.gradle'
 
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
-    compile 'com.android.support:support-v4:21.0.3'
-    compile 'com.squareup.okhttp:okhttp:2.1.0'
-    compile 'com.squareup.okhttp:okhttp-urlconnection:2.1.0'
-    compile 'com.squareup.okio:okio:1.2.0'
+    compile 'com.android.support:support-v4:22.0.0'
+    compile 'com.squareup.okhttp:okhttp:2.3.0'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.3.0'
+    compile 'com.squareup.okio:okio:1.3.0'
 }
 
 android {
