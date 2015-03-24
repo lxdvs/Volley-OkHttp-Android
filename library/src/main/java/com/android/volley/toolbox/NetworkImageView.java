@@ -160,6 +160,7 @@ public class NetworkImageView extends ImageView {
                 new ImageListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        onImageLoadError(error);
                         if (mErrorImageId != 0) {
                             setImageResource(mErrorImageId);
                         }
@@ -213,6 +214,9 @@ public class NetworkImageView extends ImageView {
 
         // update the ImageContainer to be the new bitmap container.
         mImageContainer = newContainer;
+    }
+
+    protected void onImageLoadError(VolleyError error) {
     }
 
     public void setFadeEnabled(boolean fade) {
