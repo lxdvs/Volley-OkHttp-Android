@@ -227,7 +227,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
 
     /**
      * Returns the largest power-of-two divisor for use in downscaling a bitmap.
-     * may result in image being smaller than desired dimensions
+     * may result in image being slightly larger than desired dimensions
      *
      * @param actualWidth Actual width of the bitmap
      * @param actualHeight Actual height of the bitmap
@@ -245,7 +245,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
             n *= 2;
         }
 
-        return (int) n;
+        return (int) (n / 2f);
     }
 
     @Override
