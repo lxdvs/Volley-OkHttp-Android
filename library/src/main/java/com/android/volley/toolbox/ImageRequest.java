@@ -245,7 +245,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
             n *= 2;
         }
 
-        return (int) (n / 2f);
+        return (int) Math.ceil(n / 2f);
     }
 
     @Override
