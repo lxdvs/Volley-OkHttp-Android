@@ -201,7 +201,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         // decodeOptions.inPreferQualityOverSpeed = PREFER_QUALITY_OVER_SPEED;
 
         decodeOptions.inMutable = true;
-        Bitmap inBitmap = mCache.getOldestUnused(getCacheKey(), actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
+        Bitmap inBitmap = mCache.getOldestUnused(actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
         if (inBitmap != null) {
             decodeOptions.inBitmap = inBitmap;
         }
@@ -216,7 +216,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         if (bitmap == null) {
             return null;
         } else {
-            return new CacheableBitmapDrawable(mContext.getResources(), bitmap);
+            return new CacheableBitmapDrawable(mContext.getResources(), bitmap, sampleSize > 1);
         }
     }
 

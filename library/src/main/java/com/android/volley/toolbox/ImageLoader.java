@@ -18,11 +18,8 @@ package com.android.volley.toolbox;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.TextUtils;
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.android.volley.Request;
@@ -30,7 +27,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -79,9 +75,9 @@ public class ImageLoader {
      * must not block. Implementation with an LruCache is recommended.
      */
     public interface ImageCache {
-        public CacheableBitmapDrawable getDrawable(String url);
-        public void putDrawable(String url, CacheableBitmapDrawable drawable);
-        Bitmap getOldestUnused(String cacheKey, int width, int height, Config inPreferredConfig, int sampleSize);
+        public CacheableBitmapDrawable getDrawable(CacheKey cacheKey);
+        public void putDrawable(CacheKey cacheKey, CacheableBitmapDrawable drawable);
+        Bitmap getOldestUnused(int width, int height, Config inPreferredConfig, int sampleSize);
     }
 
     /**
@@ -99,7 +95,7 @@ public class ImageLoader {
      * The default implementation of ImageListener which handles basic functionality
      * of showing a default image until the network response is received, at which point
      * it will switch to either the actual image or the error image.
-     * @param imageView The imageView that the listener is associated with.
+     * @param view The imageView that the listener is associated with.
      * @param defaultImageResId Default image resource ID to use, or 0 if it doesn't exist.
      * @param errorImageResId Error image resource ID to use, or 0 if it doesn't exist.
      */
@@ -160,7 +156,7 @@ public class ImageLoader {
      */
     public boolean isCached(String requestUrl, int maxWidth, int maxHeight) {
         throwIfNotOnMainThread();
-        String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
+        CacheKey cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
         return mCache.getDrawable(cacheKey) != null;
     }
 
@@ -201,7 +197,6 @@ public class ImageLoader {
      * request is fulfilled.
      *
      * @param requestUrl The URL of the image to be loaded.
-     * @param defaultImage Optional default image to return until the actual image is loaded.
      */
     public ImageContainer get(String requestUrl, final ImageListener listener) {
         return get(requestUrl, listener, 0, 0);
@@ -232,7 +227,7 @@ public class ImageLoader {
      */
     private ImageContainer get(String requestUrl, ImageListener imageListener,
             int maxWidth, int maxHeight, boolean doubleRespond, boolean backgroundFetch, long ttl) {
-        final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
+        final CacheKey cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
         // Try to look up the request in the cache of remote images.
         CacheableBitmapDrawable cachedBitmap = mCache.getDrawable(cacheKey);
@@ -262,7 +257,7 @@ public class ImageLoader {
 
 
         // Check to see if a request is already in-flight.
-        BatchedImageRequest request = mInFlightRequests.get(cacheKey);
+        BatchedImageRequest request = mInFlightRequests.get(cacheKey.url);
         if (request != null) {
             // If it is, add this request to the list of listeners.
             request.addContainer(imageContainer);
@@ -287,7 +282,7 @@ public class ImageLoader {
         newRequest.setTtl(ttl);
 
         mRequestQueue.add(newRequest);
-        mInFlightRequests.put(cacheKey,
+        mInFlightRequests.put(cacheKey.url,
                 new BatchedImageRequest(newRequest, imageContainer));
         return imageContainer;
     }
@@ -306,12 +301,12 @@ public class ImageLoader {
      * @param cacheKey The cache key that is associated with the image request.
      * @param response The bitmap that was returned from the network.
      */
-    private void onGetImageSuccess(String cacheKey, CacheableBitmapDrawable response) {
+    private void onGetImageSuccess(CacheKey cacheKey, CacheableBitmapDrawable response) {
         // cache the image that was fetched.
         mCache.putDrawable(cacheKey, response);
 
         // remove the request from the list of in-flight requests.
-        BatchedImageRequest request = mInFlightRequests.remove(cacheKey);
+        BatchedImageRequest request = mInFlightRequests.remove(cacheKey.url);
 
         if (request != null) {
             // Update the response bitmap.
@@ -326,10 +321,10 @@ public class ImageLoader {
      * Handler for when an image failed to load.
      * @param cacheKey The cache key that is associated with the image request.
      */
-    private void onGetImageError(String cacheKey, VolleyError error) {
+    private void onGetImageError(CacheKey cacheKey, VolleyError error) {
         // Notify the requesters that something failed via a null result.
         // Remove this request from the list of in-flight requests.
-        BatchedImageRequest request = mInFlightRequests.remove(cacheKey);
+        BatchedImageRequest request = mInFlightRequests.remove(cacheKey.url);
 
         if (request != null) {
             // Set the error for this request
@@ -353,7 +348,7 @@ public class ImageLoader {
         private final ImageListener mListener;
 
         /** The cache key that was associated with the request */
-        private final String mCacheKey;
+        private final CacheKey mCacheKey;
 
         /** The request URL that was specified */
         private final String mRequestUrl;
@@ -365,7 +360,7 @@ public class ImageLoader {
          * @param cacheKey The cache key that identifies the requested URL for this container.
          */
         public ImageContainer(CacheableBitmapDrawable drawable, String requestUrl,
-                String cacheKey, ImageListener listener) {
+                              CacheKey cacheKey, ImageListener listener) {
             mDrawable = drawable;
             mRequestUrl = requestUrl;
             mCacheKey = cacheKey;
@@ -380,19 +375,19 @@ public class ImageLoader {
                 return;
             }
 
-            BatchedImageRequest request = mInFlightRequests.get(mCacheKey);
+            BatchedImageRequest request = mInFlightRequests.get(mCacheKey.url);
             if (request != null) {
                 boolean canceled = request.removeContainerAndCancelIfNecessary(this);
                 if (canceled) {
-                    mInFlightRequests.remove(mCacheKey);
+                    mInFlightRequests.remove(mCacheKey.url);
                 }
             } else {
                 // check to see if it is already batched for delivery.
-                request = mBatchedResponses.get(mCacheKey);
+                request = mBatchedResponses.get(mCacheKey.url);
                 if (request != null) {
                     request.removeContainerAndCancelIfNecessary(this);
                     if (request.mContainers.size() == 0) {
-                        mBatchedResponses.remove(mCacheKey);
+                        mBatchedResponses.remove(mCacheKey.url);
                     }
                 }
             }
@@ -521,10 +516,9 @@ public class ImageLoader {
      * Starts the runnable for batched delivery of responses if it is not already started.
      * @param cacheKey The cacheKey of the response being delivered.
      * @param request The BatchedImageRequest to be delivered.
-     * @param error The volley error associated with the request (if applicable).
      */
-    private void batchResponse(String cacheKey, BatchedImageRequest request) {
-        mBatchedResponses.put(cacheKey, request);
+    private void batchResponse(CacheKey cacheKey, BatchedImageRequest request) {
+        mBatchedResponses.put(cacheKey.url, request);
         // If we don't already have a batch delivery runnable in flight, make a new one.
         // Note that this will be used to deliver responses to all callers in mBatchedResponses.
         if (mRunnable == null) {
@@ -568,12 +562,7 @@ public class ImageLoader {
      * @param maxWidth The max-width of the output.
      * @param maxHeight The max-height of the output.
      */
-    public static String getCacheKey(String url, int maxWidth, int maxHeight) {
-        if (maxWidth == 0 || maxHeight == 0) {
-            return url;
-        }
-
-        return new StringBuilder(url.length() + 12).append("#W").append(maxWidth)
-                .append("#H").append(maxHeight).append(url).toString();
+    public static CacheKey getCacheKey(String url, int maxWidth, int maxHeight) {
+        return new CacheKey(url, maxWidth, maxHeight);
     }
 }
