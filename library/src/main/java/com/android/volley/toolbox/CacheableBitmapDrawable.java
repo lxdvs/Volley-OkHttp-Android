@@ -11,10 +11,14 @@ public class CacheableBitmapDrawable extends BitmapDrawable {
     private boolean mForceUsing;
     private boolean mDead;
 
-    public CacheableBitmapDrawable(Resources resources, Bitmap bitmap) {
+    private boolean scaled;
+
+    public CacheableBitmapDrawable(Resources resources, Bitmap bitmap, boolean scaled) {
         super(resources, bitmap);
         // starts used=true prevents it from being instantly reclaimed
         mForceUsing = true;
+
+        this.scaled = scaled;
     }
 
     public void incrementUseCount() {
@@ -63,5 +67,9 @@ public class CacheableBitmapDrawable extends BitmapDrawable {
 
     public boolean isDead() {
         return mDead;
+    }
+
+    public boolean isOriginalSize() {
+        return !scaled;
     }
 }

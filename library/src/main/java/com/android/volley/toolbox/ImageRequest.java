@@ -201,7 +201,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         // decodeOptions.inPreferQualityOverSpeed = PREFER_QUALITY_OVER_SPEED;
 
         decodeOptions.inMutable = true;
-        Bitmap inBitmap = mCache.getOldestUnused(getCacheKey(), actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
+        Bitmap inBitmap = mCache.getOldestUnused(actualWidth / sampleSize, actualHeight / sampleSize, decodeOptions.inPreferredConfig, sampleSize);
         if (inBitmap != null) {
             decodeOptions.inBitmap = inBitmap;
         }
@@ -216,7 +216,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         if (bitmap == null) {
             return null;
         } else {
-            return new CacheableBitmapDrawable(mContext.getResources(), bitmap);
+            return new CacheableBitmapDrawable(mContext.getResources(), bitmap, sampleSize > 1);
         }
     }
 
@@ -227,7 +227,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
 
     /**
      * Returns the largest power-of-two divisor for use in downscaling a bitmap.
-     * may result in image being smaller than desired dimensions
+     * may result in image being slightly larger than desired dimensions
      *
      * @param actualWidth Actual width of the bitmap
      * @param actualHeight Actual height of the bitmap
@@ -245,7 +245,7 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
             n *= 2;
         }
 
-        return (int) n;
+        return (int) Math.ceil(n / 2f);
     }
 
     @Override
