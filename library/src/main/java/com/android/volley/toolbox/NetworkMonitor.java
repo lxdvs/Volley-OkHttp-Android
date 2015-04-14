@@ -15,8 +15,8 @@ import java.util.List;
 public class NetworkMonitor {
 
     // Bandwidths expressed in kB/s
-    public static final int BANDWIDTH_HYSTERETIC_LOWER = 40; // Just above the upper limit of 2G
-    public static final int BANDWIDTH_HYSTERETIC_UPPER = 80; // Listing Image loads ~4s apiece
+    public static final int BANDWIDTH_HYSTERETIC_LOWER = 20;
+    public static final int BANDWIDTH_HYSTERETIC_UPPER = 60;
 
     private static final boolean ENABLE_LOGGING = false;
 
