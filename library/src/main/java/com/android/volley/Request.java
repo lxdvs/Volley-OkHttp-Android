@@ -806,7 +806,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
             URL url = new URL(getUrl());
             return url.getPath();
         } catch (MalformedURLException e) {
-            return "";
+            return getUrl();
         }
     }
 
