@@ -18,6 +18,7 @@ package com.android.volley;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Pair;
 
 import com.android.volley.Request.Priority;
@@ -100,6 +101,8 @@ public class RequestQueue {
 
     /** Optional request-timing-log callback */
     private VolleyTimingLogger mTimingLogger;
+
+    private RequestLogger mRequestLogger;
 
     /**
      * Creates the worker pool. Processing will not begin until {@link #start()} is called.
@@ -203,6 +206,14 @@ public class RequestQueue {
         return mTimingLogger;
     }
 
+    public void setRequestLogger(RequestLogger logger) {
+        mRequestLogger = logger;
+    }
+
+    public interface RequestLogger {
+        void log(Request request);
+    }
+
     /**
      * A simple predicate or filter interface for Requests, for use by
      * {@link RequestQueue#cancelAll(RequestFilter)}.
@@ -263,6 +274,8 @@ public class RequestQueue {
      * @return The passed-in request
      */
     public <T> Request<T> add(Request<T> request) {
+        request.setRequestStartTime(SystemClock.elapsedRealtime());
+
         // Tag the request as belonging to this queue and add it to the set of current requests.
         request.setRequestQueue(this);
         synchronized (mCurrentRequests) {
@@ -343,6 +356,8 @@ public class RequestQueue {
                 }
             }
         }
+
+        mRequestLogger.log(request);
     }
     
     public boolean willMissCache(Request request) {

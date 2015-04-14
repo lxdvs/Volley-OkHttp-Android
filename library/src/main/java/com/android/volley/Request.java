@@ -29,6 +29,8 @@ import org.apache.http.HttpEntity;
 
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Map;
@@ -54,6 +56,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * Identifies if the request is finished
      */
     private boolean mFinished;
+    private int mStatus = -1;
 
     /**
      * Supported request methods.
@@ -144,6 +147,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     // request network time
     private long mRequestTime;
+
+    private long mRequestStartTime;
 
     /**
      * When a request can be retrieved from cache but must be refreshed from
@@ -782,5 +787,34 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public long getSoftTTL() {
         return 0;
+    }
+
+    public boolean isImageRequest() {
+        return false;
+    }
+
+    public void setRequestStartTime(long startTime) {
+        mRequestStartTime = startTime;
+    }
+
+    public long getRequestStartTime() {
+        return mRequestStartTime;
+    }
+
+    public String getPath() {
+        try {
+            URL url = new URL(getUrl());
+            return url.getPath();
+        } catch (MalformedURLException e) {
+            return "";
+        }
+    }
+
+    public void setStatus(int status) {
+        mStatus = status;
+    }
+
+    public int getStatus() {
+        return mStatus;
     }
 }
