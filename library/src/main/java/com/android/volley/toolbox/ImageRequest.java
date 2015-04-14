@@ -261,8 +261,4 @@ public class ImageRequest extends Request<CacheableBitmapDrawable> {
         mTtl = ttl;
         setOfflineCache(ttl > 0);
     }
-
-    public boolean isImageRequest() {
-        return true;
-    }
 }

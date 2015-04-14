@@ -198,7 +198,7 @@ public class RequestQueue {
         public void log(String requestUrl, List<Pair<String, Long>> timingLogs);
     }
 
-    // Todo. Refactor setter methods into constructor. Requires refactoring all the constructors. 
+    // Todo. Refactor setter methods into constructor. Requires refactoring all the constructors.
 
     public void setTimingLogger(VolleyTimingLogger logger) {
         mTimingLogger = logger;

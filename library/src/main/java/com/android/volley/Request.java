@@ -789,10 +789,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         return 0;
     }
 
-    public boolean isImageRequest() {
-        return false;
-    }
-
     public void setRequestStartTime(long startTime) {
         mRequestStartTime = startTime;
     }
