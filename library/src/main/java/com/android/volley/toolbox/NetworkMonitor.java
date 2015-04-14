@@ -15,8 +15,8 @@ import java.util.List;
 public class NetworkMonitor {
 
     // Bandwidths expressed in kB/s
-    public static final int BANDWIDTH_HYSTERETIC_LOWER = 80;
-    public static final int BANDWIDTH_HYSTERETIC_UPPER = 120;
+    public static final int BANDWIDTH_HYSTERETIC_LOWER = 20;
+    public static final int BANDWIDTH_HYSTERETIC_UPPER = 60;
 
     private static final boolean ENABLE_LOGGING = false;
 
