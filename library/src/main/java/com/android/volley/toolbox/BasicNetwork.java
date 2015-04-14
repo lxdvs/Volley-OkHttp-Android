@@ -96,7 +96,7 @@ public class BasicNetwork implements Network {
                 httpResponse = mHttpStack.performRequest(request, headers);
                 StatusLine statusLine = httpResponse.getStatusLine();
                 int statusCode = statusLine.getStatusCode();
-                request.setStatus(statusCode);
+                request.setStatusCode(statusCode);
 
                 responseHeaders = convertHeaders(httpResponse.getAllHeaders());
                 // Handle cache validation.

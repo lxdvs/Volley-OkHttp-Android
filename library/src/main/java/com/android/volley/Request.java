@@ -56,7 +56,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * Identifies if the request is finished
      */
     private boolean mFinished;
-    private int mStatus = -1;
+
+    /**
+     * Response Status code
+     */
+    private int mStatusCode = -1;
 
     /**
      * Supported request methods.
@@ -806,11 +810,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         }
     }
 
-    public void setStatus(int status) {
-        mStatus = status;
+    public void setStatusCode(int status) {
+        mStatusCode = status;
     }
 
-    public int getStatus() {
-        return mStatus;
+    public int getStatusCode() {
+        return mStatusCode;
     }
 }
