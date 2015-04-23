@@ -20,12 +20,12 @@ public class NetworkMonitor {
 
     private static final boolean ENABLE_LOGGING = false;
 
-    public static final int RING_SIZE = 4;
+    public static final int RING_SIZE = 5;
 
     public static boolean lowBandwidth;
     private static boolean mIsRoaming;
 
-    private static RingQueue<Pair<Integer, Long>> mImageTimings = new RingQueue<Pair<Integer, Long>>(RING_SIZE);
+    private static RingQueue<Pair<Integer, Long>> mImageTimings = new RingQueue<>(RING_SIZE);
 
     public static void initialize(Context context) {
         NetworkClass netclass = getNetworkClass(context);
@@ -106,7 +106,7 @@ public class NetworkMonitor {
         }
     }
 
-    public static enum NetworkClass {
+    public enum NetworkClass {
         TYPE_ROAMING("roaming"),
         TYPE_2G("2G"),
         TYPE_3G("3G"),
