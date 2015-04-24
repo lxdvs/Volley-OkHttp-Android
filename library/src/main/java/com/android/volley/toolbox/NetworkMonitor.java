@@ -20,6 +20,7 @@ public class NetworkMonitor {
 
     private static final boolean ENABLE_LOGGING = false;
 
+    // ring size changes accuracy vs responsiveness
     public static final int RING_SIZE = 5;
 
     public static boolean lowBandwidth;
