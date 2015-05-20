@@ -300,8 +300,8 @@ public class NetworkImageView extends ImageView {
 
     @Override
     protected void drawableStateChanged() {
+        super.drawableStateChanged();
         if (useVolleyImageLoader) {
-            super.drawableStateChanged();
             invalidate();
         }
     }
