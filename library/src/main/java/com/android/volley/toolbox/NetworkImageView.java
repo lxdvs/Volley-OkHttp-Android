@@ -55,6 +55,8 @@ public class NetworkImageView extends ImageView {
     /** Current ImageContainer. (either in-flight or finished) */
     private ImageContainer mImageContainer;
 
+    private boolean useVolleyImageLoader = true;
+
     public NetworkImageView(Context context) {
         this(context, null);
     }
@@ -235,17 +237,21 @@ public class NetworkImageView extends ImageView {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        loadImageIfNecessary(true);
+        if (useVolleyImageLoader) {
+            loadImageIfNecessary(true);
+        }
     }
 
     @Override
     public void setImageDrawable(Drawable drawable) {
-        if (drawable instanceof CacheableBitmapDrawable) {
-            ((CacheableBitmapDrawable) drawable).incrementUseCount();
-        }
+        if (useVolleyImageLoader) {
+            if (drawable instanceof CacheableBitmapDrawable) {
+                ((CacheableBitmapDrawable) drawable).incrementUseCount();
+            }
 
-        if (getDrawable() instanceof CacheableBitmapDrawable) {
-            ((CacheableBitmapDrawable) getDrawable()).decrementUseCount();
+            if (getDrawable() instanceof CacheableBitmapDrawable) {
+                ((CacheableBitmapDrawable) getDrawable()).decrementUseCount();
+            }
         }
 
         super.setImageDrawable(drawable);
@@ -253,8 +259,10 @@ public class NetworkImageView extends ImageView {
 
     @Override
     protected void onAttachedToWindow() {
-        if (mImageContainer == null && mImageLoader != null) {
-            setImageUrl(mUrl, mImageLoader);
+        if (useVolleyImageLoader) {
+            if (mImageContainer == null && mImageLoader != null) {
+                setImageUrl(mUrl, mImageLoader);
+            }
         }
 
         super.onAttachedToWindow();
@@ -262,13 +270,15 @@ public class NetworkImageView extends ImageView {
 
     @Override
     protected void onDetachedFromWindow() {
-        if (mImageContainer != null) {
-            // If the view was bound to an image request, cancel it and clear
-            // out the image from the view.
-            mImageContainer.cancelRequest();
-            setImageBitmap(null);
-            // also clear out the container so we can reload the image if necessary.
-            mImageContainer = null;
+        if (useVolleyImageLoader) {
+            if (mImageContainer != null) {
+                // If the view was bound to an image request, cancel it and clear
+                // out the image from the view.
+                mImageContainer.cancelRequest();
+                setImageBitmap(null);
+                // also clear out the container so we can reload the image if necessary.
+                mImageContainer = null;
+            }
         }
         super.onDetachedFromWindow();
     }
@@ -276,10 +286,12 @@ public class NetworkImageView extends ImageView {
     @Override
     public void setImageResource(int resId) {
         super.setImageResource(resId);
-        if (getDrawable() instanceof CacheableBitmapDrawable) {
-            ((CacheableBitmapDrawable) getDrawable()).decrementUseCount();
+        if (useVolleyImageLoader) {
+            if (getDrawable() instanceof CacheableBitmapDrawable) {
+                ((CacheableBitmapDrawable) getDrawable()).decrementUseCount();
+            }
+            mDefaultImageId = resId;
         }
-        mDefaultImageId = resId;
     }
 
     public void setTransientImageResource(int resId) {
@@ -288,7 +300,13 @@ public class NetworkImageView extends ImageView {
 
     @Override
     protected void drawableStateChanged() {
-        super.drawableStateChanged();
-        invalidate();
+        if (useVolleyImageLoader) {
+            super.drawableStateChanged();
+            invalidate();
+        }
+    }
+
+    public void setUseVolleyImageLoader(boolean useVolleyImageLoader) {
+        this.useVolleyImageLoader = useVolleyImageLoader;
     }
 }
