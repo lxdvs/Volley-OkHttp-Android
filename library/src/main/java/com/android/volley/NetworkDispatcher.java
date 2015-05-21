@@ -94,6 +94,8 @@ public class NetworkDispatcher extends Thread {
                 mProcessing = true;
 
                 handleNetworkRequest(startTimeMs, request);
+
+                // this exists for important samsung memory clearing :\
                 request = null;
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.

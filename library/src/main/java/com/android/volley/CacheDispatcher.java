@@ -95,6 +95,8 @@ public class CacheDispatcher extends Thread {
                 request = mCacheQueue.take();
                 request.addMarker("cache-queue-take");
                 handleCacheRequest(request);
+
+                // this exists for important samsung memory clearing :\
                 request = null;
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
