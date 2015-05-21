@@ -93,103 +93,106 @@ public class CacheDispatcher extends Thread {
                 // at least one is available.
                 final Request<?> request = mCacheQueue.take();
                 request.addMarker("cache-queue-take");
-
-                // If the request has been canceled, don't bother dispatching it.
-                if (request.isCanceled()) {
-                    request.finish("cache-discard-canceled");
-                    continue;
-                }
-
-                if (request.isFinished()) {
-                    request.finish("cache-request-already-finished");
-                    continue;
-                }
-
-                // should the request be cache only.
-                // if this is true it will never be sent to network.
-                boolean cacheOnlyRequest = request.isJoined();
-
-                // Attempt to retrieve this item from cache.
-                Cache.Entry entry = mCache.get(request.getCacheKey());
-
-                // if the entry doesn't exist then it is not in the cache
-                if (entry == null) {
-                    request.addMarker("cache-miss");
-                    if (!cacheOnlyRequest) {
-                        // Cache miss; send off to the network dispatcher.
-                        mNetworkQueue.processNetworkRequest(request);
-                    }
-                    continue;
-                }
-
-                // If it is completely expired, just send it to the network.
-                if (entry.isExpired()) {
-                    request.addMarker("cache-hit-expired");
-                    if (!cacheOnlyRequest) {
-                        request.setCacheEntry(entry);
-                        mNetworkQueue.processNetworkRequest(request);
-                    }
-                    continue;
-                }
-
-                // We have a cache hit; parse its data for delivery back to the request.
-                request.addMarker("cache-hit");
-                Response<?> response = request.parseNetworkResponse(
-                        new NetworkResponse(entry.data, entry.responseHeaders));
-                request.addMarker("cache-hit-parsed");
-
-                if (!entry.refreshNeeded()) {
-                    if (entry.softTtl - System.currentTimeMillis() < request.getSoftTTL() * CACHE_WARM_RATIO) {
-                        // caching 50% over so lets warm the cache
-                        // Post the intermediate response back to the user and have
-                        // the delivery then forward the request along to the network.
-                        request.markDelivery(Request.DeliveryType.Cache);
-                        mDelivery.postResponse(request, response, new Runnable() {
-                            @Override
-                            public void run() {
-                                mNetworkQueue.processNetworkRequest(request);
-                            }
-                        });
-                    } else {
-                        // Completely unexpired cache hit. Just deliver the response.
-                        request.markDelivery(Request.DeliveryType.Cache);
-                        mDelivery.postResponse(request, response);
-                    }
-                } else if (request.getReturnStrategy() == Request.ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
-                    // if CACHE_IF_NETWORK_FAILS prep cache response and send to network
-                    // this is a bit weird for a CACHE_IF_NETWORK_FAILS to be not allowed to go to
-                    // the network. But it 'could' happen if the request is joined
-                    if (!cacheOnlyRequest) {
-                        request.mCacheResponse = response;
-                        request.addMarker("cache-error-delivery-response-set");
-                        mNetworkQueue.processNetworkRequest(request);
-                    }
-                } else {
-                    // Soft-expired cache hit. We can deliver the cached response,
-                    // but we need to also send the request to the network for
-                    // refreshing if allowed.
-                    request.addMarker("cache-hit-refresh-needed");
-                    request.setCacheEntry(entry);
-
-                    // Mark the response as intermediate.
-                    response.intermediate = true;
-
-                    // Post the intermediate response back to the user and have
-                    // the delivery then forward the request along to the network if allowed
-                    request.markDelivery(Request.DeliveryType.Cache);
-                    mDelivery.postResponse(request, response, cacheOnlyRequest ? null : new Runnable() {
-                        @Override
-                        public void run() {
-                            mNetworkQueue.processNetworkRequest(request);
-                        }
-                    });
-                }
+                handleCacheRequest(request);
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
                 if (mQuit) {
                     return;
                 }
             }
+        }
+    }
+
+    private void handleCacheRequest(final Request<?> request) {
+        // If the request has been canceled, don't bother dispatching it.
+        if (request.isCanceled()) {
+            request.finish("cache-discard-canceled");
+            return;
+        }
+
+        if (request.isFinished()) {
+            request.finish("cache-request-already-finished");
+            return;
+        }
+
+        // should the request be cache only.
+        // if this is true it will never be sent to network.
+        boolean cacheOnlyRequest = request.isJoined();
+
+        // Attempt to retrieve this item from cache.
+        Cache.Entry entry = mCache.get(request.getCacheKey());
+
+        // if the entry doesn't exist then it is not in the cache
+        if (entry == null) {
+            request.addMarker("cache-miss");
+            if (!cacheOnlyRequest) {
+                // Cache miss; send off to the network dispatcher.
+                mNetworkQueue.processNetworkRequest(request);
+            }
+            return;
+        }
+
+        // If it is completely expired, just send it to the network.
+        if (entry.isExpired()) {
+            request.addMarker("cache-hit-expired");
+            if (!cacheOnlyRequest) {
+                request.setCacheEntry(entry);
+                mNetworkQueue.processNetworkRequest(request);
+            }
+            return;
+        }
+
+        // We have a cache hit; parse its data for delivery back to the request.
+        request.addMarker("cache-hit");
+        Response<?> response = request.parseNetworkResponse(
+                new NetworkResponse(entry.data, entry.responseHeaders));
+        request.addMarker("cache-hit-parsed");
+
+        if (!entry.refreshNeeded()) {
+            if (entry.softTtl - System.currentTimeMillis() < request.getSoftTTL() * CACHE_WARM_RATIO) {
+                // caching 50% over so lets warm the cache
+                // Post the intermediate response back to the user and have
+                // the delivery then forward the request along to the network.
+                request.markDelivery(Request.DeliveryType.Cache);
+                mDelivery.postResponse(request, response, new Runnable() {
+                    @Override
+                    public void run() {
+                        mNetworkQueue.processNetworkRequest(request);
+                    }
+                });
+            } else {
+                // Completely unexpired cache hit. Just deliver the response.
+                request.markDelivery(Request.DeliveryType.Cache);
+                mDelivery.postResponse(request, response);
+            }
+        } else if (request.getReturnStrategy() == Request.ReturnStrategy.CACHE_IF_NETWORK_FAILS) {
+            // if CACHE_IF_NETWORK_FAILS prep cache response and send to network
+            // this is a bit weird for a CACHE_IF_NETWORK_FAILS to be not allowed to go to
+            // the network. But it 'could' happen if the request is joined
+            if (!cacheOnlyRequest) {
+                request.mCacheResponse = response;
+                request.addMarker("cache-error-delivery-response-set");
+                mNetworkQueue.processNetworkRequest(request);
+            }
+        } else {
+            // Soft-expired cache hit. We can deliver the cached response,
+            // but we need to also send the request to the network for
+            // refreshing if allowed.
+            request.addMarker("cache-hit-refresh-needed");
+            request.setCacheEntry(entry);
+
+            // Mark the response as intermediate.
+            response.intermediate = true;
+
+            // Post the intermediate response back to the user and have
+            // the delivery then forward the request along to the network if allowed
+            request.markDelivery(Request.DeliveryType.Cache);
+            mDelivery.postResponse(request, response, cacheOnlyRequest ? null : new Runnable() {
+                @Override
+                public void run() {
+                    mNetworkQueue.processNetworkRequest(request);
+                }
+            });
         }
     }
 
