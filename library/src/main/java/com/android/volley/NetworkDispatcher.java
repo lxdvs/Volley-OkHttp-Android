@@ -22,8 +22,6 @@ import android.os.Build;
 import android.os.Process;
 import android.os.SystemClock;
 
-import com.android.volley.Request.ReturnStrategy;
-
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -87,86 +85,89 @@ public class NetworkDispatcher extends Thread {
         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         while (true) {
             long startTimeMs = SystemClock.elapsedRealtime();
-            Request<?> request;
+
             try {
                 // Take a request from the queue.
                 mProcessing = false;
-                request = mQueue.take();
+                Request<?> request = mQueue.take();
                 mProcessing = true;
+
+                handleNetworkRequest(startTimeMs, request);
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
                 if (mQuit) {
                     return;
                 }
-                continue;
+            }
+        }
+    }
+
+    private void handleNetworkRequest(long startTimeMs, Request<?> request) {
+        try {
+            request.addMarker("network-queue-take");
+
+            // If the request was cancelled already, do not perform the
+            // network request.
+            if (request.isCanceled()) {
+                request.finish("network-discard-cancelled");
+                return;
             }
 
-            try {
-                request.addMarker("network-queue-take");
+            if (request.isFinished()) {
+                request.finish("network-request-already-finished");
+                return;
+            }
 
-                // If the request was cancelled already, do not perform the
-                // network request.
-                if (request.isCanceled()) {
-                    request.finish("network-discard-cancelled");
-                    continue;
-                }
+            addTrafficStatsTag(request);
 
-                if (request.isFinished()) {
-                    request.finish("network-request-already-finished");
-                    continue;
-                }
+            // Perform the network request.
+            NetworkResponse networkResponse = mNetwork.performRequest(request);
+            request.addMarker("network-http-complete");
 
-                addTrafficStatsTag(request);
-
-                // Perform the network request.
-                NetworkResponse networkResponse = mNetwork.performRequest(request);
-                request.addMarker("network-http-complete");
-
-                // If the server returned 304 AND we delivered a response already,
-                // we're done -- don't deliver a second identical response.
-                if (networkResponse.notModified) {
-                    if (request.hasHadResponseDelivered()) {
-                        request.finish("not-modified-already-delivered");
-                        continue;
-                    } else {
-                        request.addMarker("not-modified-but-will-deliver");
-                    }
-                }
-
-                // Parse the response here on the worker thread.
-                Response<?> response = request.parseNetworkResponse(networkResponse);
-                request.addMarker("network-parse-complete");
-
-                // Write to cache if applicable.
-                // TODO: Only update cache metadata instead of entire record for 304s.
-                if (request.shouldCache() && response.cacheEntry != null) {
-                    mCache.put(request.getCacheKey(), response.cacheEntry, request.shouldCacheInstantly());
-                    request.addMarker("network-cache-written");
-                }
-
-                // Post the response back.
-                if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE)) {
-                    request.cancel();
+            // If the server returned 304 AND we delivered a response already,
+            // we're done -- don't deliver a second identical response.
+            if (networkResponse.notModified) {
+                if (request.hasHadResponseDelivered()) {
+                    request.finish("not-modified-already-delivered");
+                    return;
                 } else {
-                    request.markDelivery(Request.DeliveryType.Network);
+                    request.addMarker("not-modified-but-will-deliver");
                 }
-
-                mDelivery.postResponse(request, response);
-            } catch (VolleyError volleyError) {
-                if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE)) {
-                    continue;
-                }
-                volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
-                parseAndDeliverNetworkError(request, volleyError);
-            } catch (Exception e) {
-                VolleyLog.e(e, "Unhandled exception %s", e.toString());
-                if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == ReturnStrategy.NETWORK_IF_NO_CACHE)) {
-                    continue;
-                }
-                VolleyError volleyError = new VolleyError(e);
-                volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
-                mDelivery.postError(request, volleyError);
             }
+
+            // Parse the response here on the worker thread.
+            Response<?> response = request.parseNetworkResponse(networkResponse);
+            request.addMarker("network-parse-complete");
+
+            // Write to cache if applicable.
+            // TODO: Only update cache metadata instead of entire record for 304s.
+            if (request.shouldCache() && response.cacheEntry != null) {
+                mCache.put(request.getCacheKey(), response.cacheEntry, request.shouldCacheInstantly());
+                request.addMarker("network-cache-written");
+            }
+
+            // Post the response back.
+            if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == Request.ReturnStrategy.NETWORK_IF_NO_CACHE)) {
+                request.cancel();
+            } else {
+                request.markDelivery(Request.DeliveryType.Network);
+            }
+
+            mDelivery.postResponse(request, response);
+        } catch (VolleyError volleyError) {
+            if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == Request.ReturnStrategy.NETWORK_IF_NO_CACHE)) {
+                return;
+            }
+            volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
+            parseAndDeliverNetworkError(request, volleyError);
+        } catch (Exception e) {
+            VolleyLog.e(e, "Unhandled exception %s", e.toString());
+            if (request.hasHadResponseDelivered() && (request.getReturnStrategy() == Request.ReturnStrategy.NETWORK_IF_NO_CACHE)) {
+                return;
+            }
+            VolleyError volleyError = new VolleyError(e);
+            volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
+            mDelivery.postError(request, volleyError);
         }
     }
 
