@@ -83,16 +83,20 @@ public class NetworkDispatcher extends Thread {
     @Override
     public void run() {
         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+        Request<?> request;
         while (true) {
             long startTimeMs = SystemClock.elapsedRealtime();
 
             try {
                 // Take a request from the queue.
                 mProcessing = false;
-                Request<?> request = mQueue.take();
+                request = mQueue.take();
                 mProcessing = true;
 
                 handleNetworkRequest(startTimeMs, request);
+
+                // this exists for important samsung memory clearing :\
+                request = null;
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
                 if (mQuit) {
