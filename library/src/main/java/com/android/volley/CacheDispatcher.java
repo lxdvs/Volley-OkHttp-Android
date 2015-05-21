@@ -87,13 +87,15 @@ public class CacheDispatcher extends Thread {
         mCache.initialize();
         mInitialized = true;
 
+        Request<?> request;
         while (true) {
             try {
                 // Get a request from the cache triage queue, blocking until
                 // at least one is available.
-                final Request<?> request = mCacheQueue.take();
+                request = mCacheQueue.take();
                 request.addMarker("cache-queue-take");
                 handleCacheRequest(request);
+                request = null;
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
                 if (mQuit) {
