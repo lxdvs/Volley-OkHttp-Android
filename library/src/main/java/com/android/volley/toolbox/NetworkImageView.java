@@ -225,6 +225,10 @@ public class NetworkImageView extends ImageView {
         mFade = fade;
     }
 
+    public boolean isFadeEnabled() {
+        return mFade;
+    }
+
     private void setDefaultImageOrNull() {
         if(mDefaultImageId != 0) {
             setImageResource(mDefaultImageId);
