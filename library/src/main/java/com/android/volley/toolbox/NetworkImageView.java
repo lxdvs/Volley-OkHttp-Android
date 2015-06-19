@@ -96,6 +96,10 @@ public class NetworkImageView extends ImageView {
         mDefaultImageId = defaultImage;
     }
 
+    public int getDefaultImageResId() {
+        return mDefaultImageId;
+    }
+
     /**
      * Sets the error image resource ID to be used for this view in the event that the image
      * requested fails to load.
